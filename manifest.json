@@ -1,9 +1,9 @@
 {
   "id": "security-writeups-fetcher",
   "name": "Security Writeups Fetcher",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "minAppVersion": "1.0.0",
-  "description": "Fetch full-content security writeups from pentester.land, infosecwriteups.com, bugbountyhunting.com and custom RSS sources. Preview before saving, filter by tag/date, retry failed items.",
+  "description": "Fetch full-content security writeups from 8+ sources with severity detection, watchlist alerts, statistics dashboard, search/sort preview, health checks, and rich Markdown output.",
   "author": "Security Writeups Plugin",
   "authorUrl": "",
   "isDesktopOnly": true

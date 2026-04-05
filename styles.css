@@ -1,15 +1,32 @@
-/* ── Security Writeups Fetcher — Plugin Styles ── */
+/* ── Security Writeups Fetcher v2 — Plugin Styles ── */
 
 /* ── Shared modal base ── */
-/* sizing is applied inline via JS (this.modalEl.style) so Obsidian respects it */
 .wm-sources-modal .modal-content,
-.wm-preview-modal .modal-content {
+.wm-preview-modal .modal-content,
+.wm-stats-modal .modal-content {
     box-sizing: border-box;
     width: 100%;
 }
 
+/* ── Modal header gradient ── */
+.wm-modal-header {
+    background: linear-gradient(135deg, var(--interactive-accent) 0%, #7c3aed 50%, #4f46e5 100%);
+    margin: -22px -26px 18px;
+    padding: 18px 26px;
+    border-radius: 8px 8px 0 0;
+}
+.wm-modal-header h2 {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0;
+    color: #fff !important;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    letter-spacing: -0.02em;
+}
+
 .wm-sources-modal h2,
-.wm-preview-modal h2 {
+.wm-preview-modal h2,
+.wm-stats-modal h2 {
     font-size: 19px;
     font-weight: 600;
     margin: 0 0 14px;
@@ -25,6 +42,17 @@
     margin: 18px 0 7px;
     padding-bottom: 5px;
     border-bottom: 1px solid var(--background-modifier-border);
+}
+
+/* ── Fade-in animation ── */
+@keyframes wmFadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.wm-sources-modal .modal-content,
+.wm-preview-modal .modal-content,
+.wm-stats-modal .modal-content {
+    animation: wmFadeIn 0.25s ease-out;
 }
 
 /* ── Settings bar ── */
@@ -72,23 +100,29 @@
     font-size: 13px;
     color: var(--text-normal);
     outline: none;
+    transition: border-color 0.15s;
 }
 .wm-bar input:focus { border-color: var(--interactive-accent); }
 
-/* ── Source rows ── */
-.wm-list { display: flex; flex-direction: column; gap: 5px; }
+/* ── Source rows (card style) ── */
+.wm-list { display: flex; flex-direction: column; gap: 6px; }
 
 .wm-row {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 9px 12px;
+    padding: 10px 14px;
     background: var(--background-primary);
     border: 1px solid var(--background-modifier-border);
-    border-radius: 8px;
-    transition: background 0.12s, opacity 0.15s;
+    border-radius: 10px;
+    transition: all 0.18s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
-.wm-row:hover { background: var(--background-secondary); }
+.wm-row:hover {
+    background: var(--background-secondary);
+    box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+    transform: translateY(-1px);
+}
 .wm-row-off { opacity: 0.4; }
 .wm-row input[type="checkbox"] { width:15px; height:15px; flex-shrink:0; accent-color:var(--interactive-accent); cursor:pointer; }
 .wm-icon { font-size:17px; width:22px; text-align:center; flex-shrink:0; }
@@ -98,6 +132,28 @@
 .wm-url:hover { color:var(--interactive-accent); text-decoration:underline; }
 .wm-del { background:transparent; border:none; color:var(--text-muted); font-size:12px; padding:3px 7px; border-radius:5px; cursor:pointer; transition:all .12s; }
 .wm-del:hover { background:var(--background-modifier-error); color:var(--text-error); }
+
+/* ── Health dots ── */
+.wm-health { font-size: 10px; flex-shrink: 0; }
+@keyframes wmPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+.wm-health-pulse { animation: wmPulse 1.2s ease-in-out infinite; }
+
+/* ── Watchlist ── */
+.wm-watchlist-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.wm-watchlist-pill {
+    display: inline-flex; align-items: center; gap: 2px;
+    font-size: 12px; padding: 3px 10px; border-radius: 99px;
+    background: linear-gradient(135deg, #fbbf2440, #f59e0b20);
+    border: 1px solid #f59e0b50;
+    color: var(--text-normal);
+    transition: all 0.15s;
+}
+.wm-watchlist-pill:hover { background: linear-gradient(135deg, #fbbf2460, #f59e0b40); }
+.wm-watchlist-del { cursor: pointer; opacity: 0.5; font-size: 11px; }
+.wm-watchlist-del:hover { opacity: 1; color: var(--text-error); }
 
 /* ── Add form ── */
 .wm-add {
@@ -110,14 +166,15 @@
     background:var(--background-primary);
     border:1px solid var(--background-modifier-border);
     border-radius:6px; padding:7px 10px; font-size:13px; color:var(--text-normal); outline:none;
+    transition: border-color 0.15s;
 }
 .wm-add input:focus { border-color:var(--interactive-accent); }
 .wm-btn-add {
     background:var(--interactive-accent); color:var(--text-on-accent);
     border:none; border-radius:6px; padding:7px 14px; font-size:13px; font-weight:500; cursor:pointer;
-    white-space:nowrap; transition:opacity .12s;
+    white-space:nowrap; transition:all .15s;
 }
-.wm-btn-add:hover { opacity:.88; }
+.wm-btn-add:hover { opacity:.88; transform: scale(1.02); }
 
 /* ── Footer ── */
 .wm-footer {
@@ -131,10 +188,12 @@
     padding-bottom: 4px;
 }
 .wm-btn-fetch {
-    background:var(--interactive-accent); color:var(--text-on-accent);
-    border:none; border-radius:6px; padding:8px 18px; font-size:14px; font-weight:600; cursor:pointer; transition:opacity .12s;
+    background: linear-gradient(135deg, var(--interactive-accent), #7c3aed);
+    color: #fff;
+    border:none; border-radius:6px; padding:8px 18px; font-size:14px; font-weight:600; cursor:pointer;
+    transition: all .15s; box-shadow: 0 2px 8px rgba(124,58,237,0.3);
 }
-.wm-btn-fetch:hover { opacity:.88; }
+.wm-btn-fetch:hover { opacity:.88; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(124,58,237,0.4); }
 .wm-btn-cache, .wm-btn-retry {
     background:transparent; color:var(--text-muted);
     border:1px solid var(--background-modifier-border);
@@ -143,6 +202,28 @@
 .wm-btn-cache:hover { background:var(--background-modifier-error); color:var(--text-error); border-color:transparent; }
 .wm-btn-retry:hover { background:var(--background-modifier-success); color:var(--text-success); border-color:transparent; }
 .wm-meta { font-size:11px; color:var(--text-faint); margin:0; margin-left:auto; }
+
+/* ── Toolbar (search + sort) ── */
+.wm-toolbar {
+    display: flex; gap: 10px; margin-bottom: 10px;
+}
+.wm-search-input {
+    flex: 1;
+    background: var(--background-secondary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px; padding: 7px 12px; font-size: 13px;
+    color: var(--text-normal); outline: none;
+    transition: all 0.15s;
+}
+.wm-search-input:focus { border-color: var(--interactive-accent); background: var(--background-primary); }
+.wm-sort-select {
+    background: var(--background-secondary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px; padding: 7px 10px; font-size: 12px;
+    color: var(--text-normal); outline: none; cursor: pointer;
+    transition: all 0.15s;
+}
+.wm-sort-select:focus { border-color: var(--interactive-accent); }
 
 /* ── Preview modal: Filters ── */
 .wm-filters {
@@ -156,6 +237,7 @@
     background:var(--background-primary);
     border:1px solid var(--background-modifier-border);
     border-radius:6px; padding:5px 9px; font-size:13px; color:var(--text-normal); outline:none;
+    transition: border-color 0.15s;
 }
 .wm-filter-field select:focus,
 .wm-filter-field input:focus { border-color:var(--interactive-accent); }
@@ -190,17 +272,24 @@
 }
 .wm-preview-row {
     display:flex; align-items:flex-start; gap:10px;
-    padding:9px 11px; background:var(--background-primary);
-    border:1px solid var(--background-modifier-border); border-radius:7px;
-    transition:background .12s, opacity .15s;
+    padding:10px 12px; background:var(--background-primary);
+    border:1px solid var(--background-modifier-border); border-radius:9px;
+    transition: all .18s ease;
+    animation: wmFadeIn 0.2s ease-out;
 }
-.wm-preview-row:hover { background:var(--background-secondary); }
-.wm-unchecked { opacity:.4; }
+.wm-preview-row:hover { background:var(--background-secondary); box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+.wm-unchecked { opacity:.35; }
 .wm-preview-row input[type="checkbox"] { width:15px; height:15px; flex-shrink:0; margin-top:2px; accent-color:var(--interactive-accent); cursor:pointer; }
 .wm-preview-info { flex:1; min-width:0; }
+
+/* Title row with severity + watchlist */
+.wm-title-row { display:flex; align-items:center; gap:6px; margin-bottom:4px; }
+.wm-watchlist-star { font-size:14px; flex-shrink:0; filter: drop-shadow(0 0 3px #f59e0b); }
+.wm-sev-badge { font-size:12px; flex-shrink:0; }
+
 .wm-preview-title {
     font-size:13px; font-weight:500; color:var(--text-normal);
-    text-decoration:none; display:block; margin-bottom:4px;
+    text-decoration:none; display:block;
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 }
 .wm-preview-title:hover { color:var(--interactive-accent); text-decoration:underline; }
@@ -210,11 +299,24 @@
     color:var(--interactive-accent); border-radius:4px; padding:1px 6px;
 }
 .wm-meta-date { font-size:11px; color:var(--text-muted); }
+
+/* ── Severity-colored tag pills ── */
 .wm-tag-pill {
     font-size:10px; color:var(--text-muted);
     background:var(--background-secondary);
     border:1px solid var(--background-modifier-border);
     border-radius:3px; padding:1px 5px;
+    transition: all 0.12s;
+}
+.wm-tag-crit { background:#ef444420; border-color:#ef444460; color:#ef4444; font-weight:600; }
+.wm-tag-high { background:#f9731620; border-color:#f9731660; color:#f97316; font-weight:600; }
+.wm-tag-med  { background:#eab30820; border-color:#eab30860; color:#eab308; }
+.wm-tag-info { background:#3b82f620; border-color:#3b82f660; color:#3b82f6; }
+
+/* ── Watchlisted row highlight ── */
+.wm-watchlisted {
+    border-color: #f59e0b50 !important;
+    background: linear-gradient(90deg, #fbbf2408, transparent) !important;
 }
 
 /* ── Scan status ── */
@@ -225,18 +327,26 @@
 }
 .wm-hint { font-size:13px; color:var(--text-muted); margin:12px 0; }
 
-/* ── Progress bar ── */
+/* ── Animated progress bar ── */
 .wm-prog-wrap { margin:14px 0 6px; display:flex; align-items:center; gap:12px; }
 .wm-prog-bar {
-    flex:1; height:6px; background:var(--background-modifier-border);
+    flex:1; height:8px; background:var(--background-modifier-border);
     border-radius:99px; overflow:hidden;
 }
-.wm-prog-fill {
-    height:100%; background:var(--interactive-accent);
-    border-radius:99px; transition:width .3s ease;
-    width:0%;
+@keyframes wmProgGlow {
+    0%, 100% { box-shadow: 0 0 6px rgba(124,58,237,0.4); }
+    50% { box-shadow: 0 0 14px rgba(124,58,237,0.7); }
 }
-.wm-prog-label { font-size:12px; color:var(--text-muted); min-width:50px; text-align:right; }
+.wm-prog-fill {
+    height:100%;
+    background: linear-gradient(90deg, var(--interactive-accent), #7c3aed, #4f46e5);
+    background-size: 200% 100%;
+    border-radius:99px;
+    transition: width .3s ease;
+    width:0%;
+    animation: wmProgGlow 2s ease-in-out infinite;
+}
+.wm-prog-label { font-size:12px; color:var(--text-muted); min-width:80px; text-align:right; }
 
 /* ── Fetch log ── */
 .wm-log {
@@ -244,7 +354,7 @@
     background:var(--background-secondary); border-radius:7px;
     padding:10px 12px; display:flex; flex-direction:column; gap:3px;
 }
-.wm-log-row { display:flex; align-items:center; gap:8px; }
+.wm-log-row { display:flex; align-items:center; gap:8px; animation: wmFadeIn 0.15s ease-out; }
 .wm-log-icon { font-size:13px; flex-shrink:0; }
 .wm-log-title { color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
@@ -256,13 +366,82 @@
 
 /* ── Common buttons ── */
 .wm-btn-primary {
-    background:var(--interactive-accent); color:var(--text-on-accent);
-    border:none; border-radius:6px; padding:8px 18px; font-size:13px; font-weight:600; cursor:pointer; transition:opacity .12s;
+    background: linear-gradient(135deg, var(--interactive-accent), #7c3aed);
+    color: #fff;
+    border:none; border-radius:6px; padding:8px 18px; font-size:13px; font-weight:600; cursor:pointer;
+    transition: all .15s; box-shadow: 0 2px 6px rgba(124,58,237,0.25);
 }
-.wm-btn-primary:hover { opacity:.88; }
+.wm-btn-primary:hover { opacity:.88; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(124,58,237,0.35); }
 .wm-btn-secondary {
     background:transparent; color:var(--text-muted);
     border:1px solid var(--background-modifier-border);
     border-radius:6px; padding:7px 14px; font-size:13px; cursor:pointer; transition:all .12s;
 }
 .wm-btn-secondary:hover { background:var(--background-secondary); color:var(--text-normal); }
+
+/* ── Statistics Dashboard ── */
+.wm-stats-overview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+    margin-bottom: 16px;
+}
+.wm-stat-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    background: var(--background-secondary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 10px;
+    transition: all 0.15s;
+}
+.wm-stat-card:hover { box-shadow: 0 3px 10px rgba(0,0,0,0.06); transform: translateY(-1px); }
+.wm-stat-icon { font-size: 22px; }
+.wm-stat-body { display: flex; flex-direction: column; }
+.wm-stat-value { font-size: 20px; font-weight: 700; color: var(--text-normal); line-height: 1.2; }
+.wm-stat-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); }
+
+/* ── Bar chart ── */
+.wm-bar-chart { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+.wm-chart-row { display: flex; align-items: center; gap: 8px; }
+.wm-chart-label {
+    width: 120px; font-size: 11px; color: var(--text-muted);
+    text-align: right; flex-shrink: 0;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.wm-chart-bar-wrap {
+    flex: 1; height: 14px;
+    background: var(--background-secondary);
+    border-radius: 99px; overflow: hidden;
+}
+.wm-chart-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--interactive-accent), #7c3aed);
+    border-radius: 99px;
+    min-width: 4px;
+    transition: width 0.4s ease;
+}
+.wm-chart-val {
+    font-size: 11px; font-weight: 600; color: var(--text-normal);
+    min-width: 28px; text-align: right;
+}
+
+/* ── Custom scrollbar ── */
+.wm-preview-list::-webkit-scrollbar,
+.wm-log::-webkit-scrollbar {
+    width: 5px;
+}
+.wm-preview-list::-webkit-scrollbar-track,
+.wm-log::-webkit-scrollbar-track {
+    background: transparent;
+}
+.wm-preview-list::-webkit-scrollbar-thumb,
+.wm-log::-webkit-scrollbar-thumb {
+    background: var(--background-modifier-border);
+    border-radius: 99px;
+}
+.wm-preview-list::-webkit-scrollbar-thumb:hover,
+.wm-log::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+}

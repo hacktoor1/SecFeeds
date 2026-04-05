@@ -1,68 +1,94 @@
 # 🔐 Security Writeups Fetcher
 
-An Obsidian plugin that automatically fetches, previews, and saves full-content security writeups from popular bug bounty and infosec platforms — directly into your vault as clean Markdown notes.
+An Obsidian plugin that automatically fetches, previews, and saves full-content security writeups from popular bug bounty and infosec platforms — directly into your vault as clean, richly-formatted Markdown notes.
 
 ## ✨ Features
 
 ### 📡 Multi-Source RSS Fetching
-- **Built-in sources** — Ships with three curated feeds out of the box:
+- **8 built-in sources** out of the box:
   - 🎯 **Pentester Land** — Curated bug bounty writeups
   - 📝 **InfoSec Writeups** — Community-driven security articles
   - 🐛 **Bug Bounty Hunting** — Hunting tips and disclosure reports
-- **Custom RSS sources** — Add any RSS/Atom feed (e.g. PortSwigger Research, personal blogs) with a name, URL, and emoji icon.
-- **Per-source toggle** — Enable or disable individual sources without removing them.
+  - 🔬 **PortSwigger Research** — Web security research
+  - 📡 **The Hacker News** — Cybersecurity news and analysis
+  - 🧪 **Project Zero** — Google's zero-day research
+  - 🛡️ **Assetnote Research** — Attack surface management research
+  - 🔒 **Krebs on Security** — Investigative cybersecurity journalism
+- **Custom RSS sources** — Add any RSS/Atom feed with a name, URL, and emoji icon
+- **Per-source toggle** — Enable or disable individual sources without removing them
+- **🏥 Source Health Check** — Live health dots (🟢 online / 🔴 offline / ⏳ checking) next to each source
 
 ### 📄 Full Article Scraping
-- Fetches the **complete article content** from the original page (not just the RSS snippet).
-- Intelligent **article extraction** using configurable CSS selectors per source — strips nav, footer, ads, sidebars, newsletters, and other noise.
-- Falls back to RSS body when full-content fetch fails.
-- Toggle full-content mode on/off for faster RSS-only imports.
+- Fetches the **complete article content** from the original page (not just the RSS snippet)
+- Intelligent **article extraction** using configurable CSS selectors per source
+- Falls back to RSS body when full-content fetch fails
+- Toggle full-content mode on/off for faster RSS-only imports
 
 ### 🔍 Scan & Preview Workflow
-- **Scan** all enabled sources for new writeups before saving anything.
-- **Preview modal** shows every found item with title, source badge, date, and tags.
-- **Select / deselect** individual writeups or use "Select all" / "Select none".
-- Only fetches writeups you haven't already seen (URL deduplication).
+- **Scan** all enabled sources for new writeups before saving
+- **Preview modal** with title, source badge, date, severity indicator, and tags
+- **🔎 Real-time search** — Filter scanned items by title or source
+- **📋 Sort options** — Sort by newest, oldest, severity, source, or title
+- **Select / deselect** individual writeups or use batch controls
+- URL deduplication — only shows truly new writeups
 
-### 🏷️ Automatic Tagging
-- **Smart tag extraction** from titles and RSS categories — recognizes 24+ security topics:
-  `xss` · `sqli` · `rce` · `ssrf` · `idor` · `csrf` · `xxe` · `lfi` · `open-redirect` · `recon` · `privesc` · `bypass` · `ato` · `api-security` · `auth` · `race-condition` · `ssti` · `deserialization` · `graphql` · `mobile` · `ctf` · `htb` · `bug-bounty` · `cve`
-- Every writeup is also tagged with `#writeup`, `#security`, and its source name.
+### ⭐ Keyword Watchlist
+- Configure a set of **watchlist keywords** (e.g. `rce`, `zero-day`, `authentication bypass`)
+- Writeups matching watchlist keywords get a **⭐ star badge** in the preview
+- Auto-selected by default so you never miss important topics
+- Manage keywords in the Sources Manager or Settings Tab
+
+### 🏷️ Automatic Tagging & Severity Detection
+- **Smart tag extraction** from titles and RSS categories — recognizes 24+ security topics
+- **Automatic severity classification**: 🔴 Critical · 🟠 High · 🟡 Medium · 🔵 Info
+- **CVE extraction** — Automatically detects CVE IDs in titles and content
+- **Platform detection** — Recognizes HackerOne, Bugcrowd, Intigriti, HackTheBox, etc.
+- **Severity-colored tag pills** in the preview UI
+
+### 📝 Rich Markdown Output
+Each saved writeup includes:
+- **Enhanced YAML frontmatter** — `reading_time`, `word_count`, `severity`, `platform`, `cve_ids`, `excerpt`
+- **Info card callout** — Visual metadata table at the top with all details
+- **Table of Contents** — Auto-generated from article headings (3+ headings)
+- **Related writeups** — Dataview-compatible query block for cross-references
+- **Navigation footer** — Link back to the writeups index
+
+### 📊 Statistics Dashboard
+- **Overview cards** — Total fetched, total failed, active sources, cached URLs
+- **Bar charts** — Writeups per source, top tags, and monthly trends
+- **Reset stats** — Clear analytics data when needed
+- Accessible from Sources Manager, Settings Tab, or command palette
 
 ### 🗂️ Advanced Filtering
-- **Filter by tag** — Choose from a dropdown of all recognized security tags before scanning.
-- **Filter by date range** — Set a "From" and "To" date to narrow results.
-- Filters are applied during the scan phase so only relevant items appear in the preview.
+- **Filter by tag** — Dropdown of all 24 recognized security tags
+- **Filter by date range** — Set "From" and "To" dates
+- Filters applied during scan for efficient results
 
-### 📝 Clean Markdown Output
-- Converts full HTML articles to **well-structured Markdown** — headings, code blocks (with language hints), links, images, tables, blockquotes, lists, and more.
-- Each note includes **YAML frontmatter** with `title`, `source`, `url`, `date`, `tags`, and `scraped_at`.
-- Real article titles are used as filenames (sanitized for filesystem safety), with collision-safe short hashes when needed.
-- Notes are organized into per-source subfolders (e.g. `writeups/pentester-land/`).
+### 📤 Export / Import Sources
+- **Export** — Copy all source configs to clipboard as JSON for backup/sharing
+- **Import** — Paste JSON to restore sources from a backup, with deduplication
 
 ### 📑 Auto-Generated Index
-- After every fetch, an `index.md` file is created/updated in the output folder.
-- Groups writeups by source with backlinks (`[[...]]`) and shows total count.
-- Includes a quick-access tag reference section.
+- `index.md` created/updated after every fetch
+- Groups writeups by source with backlinks (`[[...]]`)
+- Full tag reference section
 
 ### 🔄 Retry Failed Items
-- Failed fetches are tracked and surfaced in the UI.
-- One-click **retry** button to re-attempt all failed items.
-- Status bar shows a warning indicator when failed items exist.
+- Failed fetches tracked and surfaced in the UI
+- One-click retry from the done screen
 
-### ⚙️ Configurable Settings
-- **Output folder** — Choose where writeups are saved in your vault.
-- **Limit per source** — Control how many items are fetched from each feed.
-- **Auto-fetch on startup** — Optionally scan and open the preview modal when Obsidian launches.
-- **Cache management** — Clear the "seen URLs" cache to re-fetch older writeups.
-- All settings accessible from the **Sources Manager modal**, **Settings Tab**, or the **ribbon icons**.
+### ⚙️ Settings
+- **Output folder**, **limit per source**, **auto-fetch on startup**
+- **Cache management** — Clear seen URLs to re-fetch older writeups
+- Settings accessible from Sources Manager, Settings Tab, or ribbon icons
 
-### 🖥️ UI & UX
-- **Two ribbon icons** — Quick access to the Sources Manager (🛡️) and Fetch modal (⬇).
-- **Two command palette commands** — `Open Sources Manager` and `Fetch Writeups (with preview)`.
-- **Status bar widget** — Shows total writeup count and failed item warnings; click to open Sources Manager.
-- **Progress bar** with per-item log during fetch — see each writeup being processed in real time.
-- **Responsive modals** — Scrollable, sticky footers, works on all screen sizes.
+### 🎨 UI/UX
+- **Gradient modal headers** — Purple gradient accent for a premium feel
+- **Card-style source rows** — Shadow and hover lift effects
+- **Animated progress bar** — Pulsing glow during fetch
+- **Fade-in animations** — Smooth content transitions
+- **Custom thin scrollbars** — Clean scrolling in lists
+- **Two ribbon icons** + **Three command palette commands** + **Status bar widget**
 
 ## 🚀 Installation
 
@@ -76,18 +102,17 @@ An Obsidian plugin that automatically fetches, previews, and saves full-content 
 
 | File | Purpose |
 |---|---|
-| `main.js` | Core plugin logic — RSS parsing, HTML→Markdown conversion, fetch engine, modals, settings |
-| `styles.css` | UI styles for modals, preview list, progress bar, source rows, filters |
+| `main.js` | Core plugin logic — RSS parsing, HTML→Markdown, fetch engine, modals, stats, settings |
+| `styles.css` | UI styles — gradient headers, cards, animated progress, tag colors, stats dashboard |
 | `manifest.json` | Plugin metadata (ID, version, description) |
-| `data.json` | Persisted settings, seen URLs cache, source configurations |
+| `data.json` | Persisted settings, seen URLs, source configs, statistics |
 
 ## 🛠️ Usage
 
-1. Click the **🛡️ ribbon icon** (or run the `Open Sources Manager` command) to configure sources and settings.
-2. Click the **⬇ ribbon icon** (or run `Fetch Writeups`) to scan for new content.
-3. Apply optional **tag and date filters**, then click **Scan for new writeups**.
-4. **Preview** the results, check/uncheck what you want, then hit **Save selected**.
-5. Find your writeups in the configured output folder, organized by source.
+1. Click the **🛡️ ribbon icon** to open the **Sources Manager** — configure sources, watchlist, and settings.
+2. Click the **⬇ ribbon icon** to open the **Fetch modal** — scan, search, sort, preview, and save.
+3. Use the **📊 Stats** button to view your analytics dashboard.
+4. Find your writeups in the configured output folder, organized by source.
 
 ## 📜 License
 
