@@ -1,0 +1,10 @@
+{
+  "id": "security-writeups-fetcher",
+  "name": "Security Writeups Fetcher",
+  "version": "2.0.0",
+  "minAppVersion": "1.0.0",
+  "description": "Fetch full-content security writeups from pentester.land, infosecwriteups.com, bugbountyhunting.com and custom RSS sources. Preview before saving, filter by tag/date, retry failed items.",
+  "author": "Security Writeups Plugin",
+  "authorUrl": "",
+  "isDesktopOnly": true
+}

@@ -1,0 +1,58 @@
+{
+  "outputFolder": "writeups",
+  "limitPerSource": 40,
+  "autoFetchOnStartup": true,
+  "fetchFullContent": true,
+  "lastFetched": "4/5/2026, 4:18:22 AM",
+  "seenUrls": [
+    "https://infosecwriteups.com/how-i-simulated-a-supply-chain-attack-on-thousands-of-servers-and-made-25k-7d36647cbf36?source=rss----7b722bfd1b8d---4",
+    "https://infosecwriteups.com/bug-hunting-without-touching-the-target-the-power-of-external-intelligence-c40d0b0c4d27?source=rss----7b722bfd1b8d---4",
+    "https://infosecwriteups.com/graphql-security-how-i-found-and-exploited-critical-idor-and-authorization-bypass-in-a-42ab78e13642?source=rss----7b722bfd1b8d---4",
+    "https://infosecwriteups.com/introduction-to-siem-and-wazuh-architecture-components-why-it-matters-8f29d30c9f70?source=rss----7b722bfd1b8d---4",
+    "https://infosecwriteups.com/race-conditions-tryhackme-write-up-farros-fdced58088b1?source=rss----7b722bfd1b8d---4",
+    "https://infosecwriteups.com/rbac-role-based-access-control-implementation-790e090d1303?source=rss----7b722bfd1b8d---4",
+    "https://infosecwriteups.com/my-macbook-ran-out-of-storage-mid-deadline-so-i-built-the-tool-that-fixed-it-forever-73e202a7eb32?source=rss----7b722bfd1b8d---4",
+    "https://infosecwriteups.com/virtualhost-and-subdomains-36e2e156fa4e?source=rss----7b722bfd1b8d---4",
+    "https://infosecwriteups.com/path-traversal-a-tour-to-the-web-servers-assets-6a81e6312386?source=rss----7b722bfd1b8d---4",
+    "https://infosecwriteups.com/reverse-engineering-a-whatsapp-0-click-vulnerability-a-deep-dive-into-cve-2025-43300-d8d425644fe9?source=rss----7b722bfd1b8d---4"
+  ],
+  "failedUrls": [],
+  "sources": [
+    {
+      "id": "pentester-land",
+      "name": "Pentester Land",
+      "url": "https://pentester.land/writeups/",
+      "feedUrl": "https://pentester.land/writeups/index.xml",
+      "icon": "🎯",
+      "enabled": true,
+      "articleSelector": "article, .post-content, .content, main"
+    },
+    {
+      "id": "infosec-writeups",
+      "name": "InfoSec Writeups",
+      "url": "https://infosecwriteups.com/",
+      "feedUrl": "https://infosecwriteups.com/feed",
+      "icon": "📝",
+      "enabled": true,
+      "articleSelector": "article, .postArticle-content, section[data-field=\"body\"]"
+    },
+    {
+      "id": "bugbounty-hunting",
+      "name": "Bug Bounty Hunting",
+      "url": "https://www.bugbountyhunting.com/",
+      "feedUrl": "https://www.bugbountyhunting.com/feed.xml",
+      "icon": "🐛",
+      "enabled": true,
+      "articleSelector": "article, .post-body, .entry-content, main"
+    },
+    {
+      "id": "freedium",
+      "name": "freedium",
+      "url": "https://freedium-mirror.cfd/",
+      "feedUrl": "https://freedium-mirror.cfd/",
+      "icon": "🔗",
+      "enabled": true,
+      "articleSelector": "article, .post-content, main"
+    }
+  ]
+}

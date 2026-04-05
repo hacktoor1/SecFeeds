@@ -1,0 +1,268 @@
+/* ── Security Writeups Fetcher — Plugin Styles ── */
+
+/* ── Shared modal base ── */
+/* sizing is applied inline via JS (this.modalEl.style) so Obsidian respects it */
+.wm-sources-modal .modal-content,
+.wm-preview-modal .modal-content {
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.wm-sources-modal h2,
+.wm-preview-modal h2 {
+    font-size: 19px;
+    font-weight: 600;
+    margin: 0 0 14px;
+    color: var(--text-normal);
+}
+
+.wm-section-title {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin: 18px 0 7px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid var(--background-modifier-border);
+}
+
+/* ── Settings bar ── */
+.wm-bar {
+    display: flex;
+    gap: 14px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    background: var(--background-secondary);
+    border-radius: 8px;
+    padding: 11px 14px;
+}
+.wm-bar-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.wm-bar-field label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+}
+.wm-bar-toggle {
+    flex-direction: row !important;
+    align-items: center;
+    gap: 7px !important;
+    padding-bottom: 2px;
+}
+.wm-bar-toggle label {
+    text-transform: none !important;
+    letter-spacing: 0 !important;
+    font-size: 13px !important;
+    font-weight: 400 !important;
+    color: var(--text-normal) !important;
+    cursor: pointer;
+}
+.wm-bar input[type="text"],
+.wm-bar input[type="number"] {
+    background: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    padding: 5px 9px;
+    font-size: 13px;
+    color: var(--text-normal);
+    outline: none;
+}
+.wm-bar input:focus { border-color: var(--interactive-accent); }
+
+/* ── Source rows ── */
+.wm-list { display: flex; flex-direction: column; gap: 5px; }
+
+.wm-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    background: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px;
+    transition: background 0.12s, opacity 0.15s;
+}
+.wm-row:hover { background: var(--background-secondary); }
+.wm-row-off { opacity: 0.4; }
+.wm-row input[type="checkbox"] { width:15px; height:15px; flex-shrink:0; accent-color:var(--interactive-accent); cursor:pointer; }
+.wm-icon { font-size:17px; width:22px; text-align:center; flex-shrink:0; }
+.wm-info { flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; }
+.wm-name { font-size:13px; font-weight:500; color:var(--text-normal); }
+.wm-url { font-size:11px; color:var(--text-muted); text-decoration:none; }
+.wm-url:hover { color:var(--interactive-accent); text-decoration:underline; }
+.wm-del { background:transparent; border:none; color:var(--text-muted); font-size:12px; padding:3px 7px; border-radius:5px; cursor:pointer; transition:all .12s; }
+.wm-del:hover { background:var(--background-modifier-error); color:var(--text-error); }
+
+/* ── Add form ── */
+.wm-add {
+    display:flex; flex-wrap:wrap; gap:7px; align-items:center;
+    background:var(--background-secondary); border-radius:8px; padding:11px 14px;
+}
+.wm-add input[type="text"],
+.wm-add input[type="url"] {
+    flex:1; min-width:140px;
+    background:var(--background-primary);
+    border:1px solid var(--background-modifier-border);
+    border-radius:6px; padding:7px 10px; font-size:13px; color:var(--text-normal); outline:none;
+}
+.wm-add input:focus { border-color:var(--interactive-accent); }
+.wm-btn-add {
+    background:var(--interactive-accent); color:var(--text-on-accent);
+    border:none; border-radius:6px; padding:7px 14px; font-size:13px; font-weight:500; cursor:pointer;
+    white-space:nowrap; transition:opacity .12s;
+}
+.wm-btn-add:hover { opacity:.88; }
+
+/* ── Footer ── */
+.wm-footer {
+    display:flex; gap:9px; align-items:center; flex-wrap:wrap;
+    margin-top:18px; padding-top:14px;
+    border-top:1px solid var(--background-modifier-border);
+    position: sticky;
+    bottom: 0;
+    background: var(--modal-background, var(--background-primary));
+    z-index: 1;
+    padding-bottom: 4px;
+}
+.wm-btn-fetch {
+    background:var(--interactive-accent); color:var(--text-on-accent);
+    border:none; border-radius:6px; padding:8px 18px; font-size:14px; font-weight:600; cursor:pointer; transition:opacity .12s;
+}
+.wm-btn-fetch:hover { opacity:.88; }
+.wm-btn-cache, .wm-btn-retry {
+    background:transparent; color:var(--text-muted);
+    border:1px solid var(--background-modifier-border);
+    border-radius:6px; padding:7px 13px; font-size:13px; cursor:pointer; transition:all .12s;
+}
+.wm-btn-cache:hover { background:var(--background-modifier-error); color:var(--text-error); border-color:transparent; }
+.wm-btn-retry:hover { background:var(--background-modifier-success); color:var(--text-success); border-color:transparent; }
+.wm-meta { font-size:11px; color:var(--text-faint); margin:0; margin-left:auto; }
+
+/* ── Preview modal: Filters ── */
+.wm-filters {
+    display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end;
+    background:var(--background-secondary); border-radius:8px; padding:11px 14px; margin-bottom:12px;
+}
+.wm-filter-field { display:flex; flex-direction:column; gap:4px; }
+.wm-filter-field label { font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); }
+.wm-filter-field select,
+.wm-filter-field input[type="date"] {
+    background:var(--background-primary);
+    border:1px solid var(--background-modifier-border);
+    border-radius:6px; padding:5px 9px; font-size:13px; color:var(--text-normal); outline:none;
+}
+.wm-filter-field select:focus,
+.wm-filter-field input:focus { border-color:var(--interactive-accent); }
+
+.wm-src-summary {
+    font-size:12px; color:var(--text-muted); margin-bottom:6px;
+    background:var(--background-secondary); padding:7px 12px; border-radius:6px;
+}
+.wm-src-names { font-weight:500; color:var(--text-normal); }
+
+.wm-toggle-row {
+    display:flex; align-items:center; gap:8px; margin:10px 0;
+    font-size:13px; color:var(--text-normal);
+}
+.wm-toggle-row input { accent-color:var(--interactive-accent); }
+
+/* ── Preview list ── */
+.wm-sel-row {
+    display:flex; align-items:center; gap:8px; margin-bottom:8px;
+}
+.wm-btn-sm {
+    background:transparent; border:1px solid var(--background-modifier-border);
+    color:var(--text-muted); border-radius:5px; padding:4px 10px; font-size:12px; cursor:pointer;
+    transition:all .12s;
+}
+.wm-btn-sm:hover { background:var(--background-secondary); color:var(--text-normal); }
+.wm-count-label { font-size:12px; color:var(--text-muted); margin-left:auto; }
+
+.wm-preview-list {
+    display:flex; flex-direction:column; gap:5px;
+    max-height:380px; overflow-y:auto; padding-right:2px;
+}
+.wm-preview-row {
+    display:flex; align-items:flex-start; gap:10px;
+    padding:9px 11px; background:var(--background-primary);
+    border:1px solid var(--background-modifier-border); border-radius:7px;
+    transition:background .12s, opacity .15s;
+}
+.wm-preview-row:hover { background:var(--background-secondary); }
+.wm-unchecked { opacity:.4; }
+.wm-preview-row input[type="checkbox"] { width:15px; height:15px; flex-shrink:0; margin-top:2px; accent-color:var(--interactive-accent); cursor:pointer; }
+.wm-preview-info { flex:1; min-width:0; }
+.wm-preview-title {
+    font-size:13px; font-weight:500; color:var(--text-normal);
+    text-decoration:none; display:block; margin-bottom:4px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.wm-preview-title:hover { color:var(--interactive-accent); text-decoration:underline; }
+.wm-preview-meta { display:flex; align-items:center; gap:5px; flex-wrap:wrap; }
+.wm-badge-source {
+    font-size:10px; font-weight:600; background:var(--interactive-accent-hover);
+    color:var(--interactive-accent); border-radius:4px; padding:1px 6px;
+}
+.wm-meta-date { font-size:11px; color:var(--text-muted); }
+.wm-tag-pill {
+    font-size:10px; color:var(--text-muted);
+    background:var(--background-secondary);
+    border:1px solid var(--background-modifier-border);
+    border-radius:3px; padding:1px 5px;
+}
+
+/* ── Scan status ── */
+.wm-scan-status {
+    font-size:14px; color:var(--text-muted);
+    background:var(--background-secondary); border-radius:7px;
+    padding:14px 16px; margin:14px 0;
+}
+.wm-hint { font-size:13px; color:var(--text-muted); margin:12px 0; }
+
+/* ── Progress bar ── */
+.wm-prog-wrap { margin:14px 0 6px; display:flex; align-items:center; gap:12px; }
+.wm-prog-bar {
+    flex:1; height:6px; background:var(--background-modifier-border);
+    border-radius:99px; overflow:hidden;
+}
+.wm-prog-fill {
+    height:100%; background:var(--interactive-accent);
+    border-radius:99px; transition:width .3s ease;
+    width:0%;
+}
+.wm-prog-label { font-size:12px; color:var(--text-muted); min-width:50px; text-align:right; }
+
+/* ── Fetch log ── */
+.wm-log {
+    max-height:280px; overflow-y:auto; font-size:12px;
+    background:var(--background-secondary); border-radius:7px;
+    padding:10px 12px; display:flex; flex-direction:column; gap:3px;
+}
+.wm-log-row { display:flex; align-items:center; gap:8px; }
+.wm-log-icon { font-size:13px; flex-shrink:0; }
+.wm-log-title { color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+/* ── Done summary ── */
+.wm-hr { border:none; border-top:1px solid var(--background-modifier-border); margin:14px 0 10px; }
+.wm-done-summary { margin-bottom:6px; }
+.wm-done-ok { color:var(--text-success); font-size:14px; font-weight:500; margin:0 0 4px; }
+.wm-done-fail { color:var(--text-warning); font-size:13px; margin:0; }
+
+/* ── Common buttons ── */
+.wm-btn-primary {
+    background:var(--interactive-accent); color:var(--text-on-accent);
+    border:none; border-radius:6px; padding:8px 18px; font-size:13px; font-weight:600; cursor:pointer; transition:opacity .12s;
+}
+.wm-btn-primary:hover { opacity:.88; }
+.wm-btn-secondary {
+    background:transparent; color:var(--text-muted);
+    border:1px solid var(--background-modifier-border);
+    border-radius:6px; padding:7px 14px; font-size:13px; cursor:pointer; transition:all .12s;
+}
+.wm-btn-secondary:hover { background:var(--background-secondary); color:var(--text-normal); }
