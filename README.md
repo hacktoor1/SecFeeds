@@ -123,7 +123,8 @@ Each saved writeup includes:
 ### 🎨 UI/UX
 - **Monochrome risk palette** — black / white / gray base with red and yellow accents mapped to severity
 - **Refined modal hierarchy** — clearer headers, subtitles, cards, badges, and footer actions
-- **Mobile-optimized screens** — full-screen modals, safer touch targets, sticky action bars, and safe-area support
+- **Mobile-optimized screens** — full-screen modals, safer touch targets, sticky action bars, safe-area support, and tighter mobile button sizing
+- **Theme-defensive rendering** — button labels and preview titles resist aggressive Obsidian theme overrides
 - **Animated progress and transitions** — subtle motion without clutter
 - **Custom thin scrollbars** — clean scrolling in lists
 - **Two ribbon icons** + **Multiple command palette commands** + **Status bar widget**
@@ -141,7 +142,7 @@ Each saved writeup includes:
 | File | Purpose |
 |---|---|
 | `main.js` | Core plugin logic — RSS parsing, HTML→Markdown, fetch engine, modals, stats, settings |
-| `styles.css` | UI styles — gradient headers, cards, animated progress, tag colors, stats dashboard |
+| `styles.css` | UI styles — monochrome modal system, mobile-safe layouts, severity colors, compact actions, and stats dashboard |
 | `manifest.json` | Plugin metadata (ID, version, description) |
 | `data.json` | Persisted settings, seen URLs, source configs, statistics |
 
