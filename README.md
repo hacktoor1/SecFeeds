@@ -1,4 +1,4 @@
-# 🔐 Security Writeups Fetcher
+# 🔐 Security Writeup Collector
 
 An Obsidian plugin that automatically fetches, previews, and saves full-content security writeups from popular bug bounty and infosec platforms — directly into your vault as clean, richly-formatted Markdown notes.
 
@@ -21,8 +21,15 @@ An Obsidian plugin that automatically fetches, previews, and saves full-content 
 ### 📄 Full Article Scraping
 - Fetches the **complete article content** from the original page (not just the RSS snippet)
 - Intelligent **article extraction** using configurable CSS selectors per source
+- **Medium paywall fallback** — tries the original Medium URL first, then automatically falls back to Freedium only when the article is locked or incomplete
 - Falls back to RSS body when full-content fetch fails
 - Toggle full-content mode on/off for faster RSS-only imports
+
+### 🎯 Topic-Based Sources
+- **Topic search sources** — add dynamic search endpoints such as `https://medium.com/search?q=` or GitHub search
+- **Multi-topic sync** — register one source with multiple topics like `idor, xss, ssrf, sqli`
+- **Auto-folder routing** — map topics to folders like `Writeups/Web/IDOR`, with `Writeups/Unsorted/<topic>` as fallback
+- **Per-source sync controls** — configure enabled state, auto-sync, and sync frequency
 
 ### 🔍 Scan & Preview Workflow
 - **Scan** all enabled sources for new writeups before saving
@@ -48,6 +55,8 @@ An Obsidian plugin that automatically fetches, previews, and saves full-content 
 ### 📝 Rich Markdown Output
 Each saved writeup includes:
 - **Enhanced YAML frontmatter** — `reading_time`, `word_count`, `severity`, `platform`, `cve_ids`, `excerpt`
+- **Egyptian Arabic summary block** — concise revision-friendly notes directly after the frontmatter
+- **Reusable test case block** — copy-friendly vulnerability checklist with payload, secure behavior, CWE, OWASP, and attack flow
 - **Info card callout** — Visual metadata table at the top with all details
 - **Table of Contents** — Auto-generated from article headings (3+ headings)
 - **Related writeups** — Dataview-compatible query block for cross-references
@@ -94,9 +103,9 @@ Each saved writeup includes:
 
 ### Manual
 1. Download the latest release files (`main.js`, `manifest.json`, `styles.css`).
-2. Create a folder named `security-writeups-fetcher` inside your vault's `.obsidian/plugins/` directory.
+2. Create a folder named `security-writeup-collector` inside your vault's `.obsidian/plugins/` directory.
 3. Copy the downloaded files into this folder.
-4. Open Obsidian → Settings → Community Plugins → Enable **Security Writeups Fetcher**.
+4. Open Obsidian → Settings → Community Plugins → Enable **Security Writeup Collector**.
 
 ## 📁 Project Structure
 

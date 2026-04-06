@@ -1,10 +1,10 @@
 {
-  "id": "security-writeups-fetcher",
-  "name": "Security Writeups Fetcher",
-  "version": "3.0.0",
+  "id": "security-writeup-collector",
+  "name": "Security Writeup Collector",
+  "version": "3.1.0",
   "minAppVersion": "1.0.0",
-  "description": "Fetch full-content security writeups from 8+ sources with severity detection, watchlist alerts, statistics dashboard, search/sort preview, health checks, and rich Markdown output.",
-  "author": "Security Writeups Plugin",
+  "description": "Collect cybersecurity writeups offline into your Obsidian vault with Medium fallback, topic-based sources, summaries, reusable test cases, and rich markdown notes.",
+  "author": "Security Writeup Collector",
   "authorUrl": "",
-  "isDesktopOnly": true
+  "isDesktopOnly": false
 }
