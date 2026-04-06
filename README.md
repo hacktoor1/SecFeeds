@@ -30,6 +30,8 @@ An Obsidian plugin that automatically fetches, previews, and saves full-content 
 - **Multi-topic sync** — register one source with multiple topics like `idor, xss, ssrf, sqli`
 - **Auto-folder routing** — map topics to folders like `Writeups/Web/IDOR`, with `Writeups/Unsorted/<topic>` as fallback
 - **Per-source sync controls** — configure enabled state, auto-sync, and sync frequency
+- **Built-in topic packs** — ships with ready-to-use coverage for Web, Mobile, Network, Active Directory, Bug Bounty platforms, Recon, and CVE tracking
+- **New CVEs input** — add rolling CVE search terms such as `cve-2026` or exact IDs like `cve-2026-12345` directly from settings
 
 ### 🔍 Scan & Preview Workflow
 - **Scan** all enabled sources for new writeups before saving
@@ -37,7 +39,7 @@ An Obsidian plugin that automatically fetches, previews, and saves full-content 
 - **🔎 Real-time search** — Filter scanned items by title or source
 - **📋 Sort options** — Sort by newest, oldest, severity, source, or title
 - **Select / deselect** individual writeups or use batch controls
-- URL deduplication — only shows truly new writeups
+- **Robust deduplication** — normalizes URLs, strips tracking parameters, checks cached URLs, and checks existing notes in the vault before showing or saving anything
 
 ### ⭐ Keyword Watchlist
 - Configure a set of **watchlist keywords** (e.g. `rce`, `zero-day`, `authentication bypass`)
@@ -45,8 +47,15 @@ An Obsidian plugin that automatically fetches, previews, and saves full-content 
 - Auto-selected by default so you never miss important topics
 - Manage keywords in the Sources Manager or Settings Tab
 
+### 🚨 Important Alerts
+- **Critical and CVE alerts** — generate local alerts when a scan finds critical writeups or newly matched CVE content
+- **Works on desktop and mobile** — in-app Obsidian notices show on both; desktop system notifications are used when permission is available
+- **Best-effort cross-device sync** — alerts can be relayed across devices when plugin data is synced
+- **Cooldown controls** — avoid alert spam by throttling repeated notifications for the same writeup
+- **Test alert button** — verify the notification path from settings
+
 ### 🏷️ Automatic Tagging & Severity Detection
-- **Smart tag extraction** from titles and RSS categories — recognizes 24+ security topics
+- **Smart tag extraction** from titles and RSS categories — recognizes a broad set of web, mobile, network, AD, bug bounty, and CVE topics
 - **Automatic severity classification**: 🔴 Critical · 🟠 High · 🟡 Medium · 🔵 Info
 - **CVE extraction** — Automatically detects CVE IDs in titles and content
 - **Platform detection** — Recognizes HackerOne, Bugcrowd, Intigriti, HackTheBox, etc.
@@ -69,7 +78,7 @@ Each saved writeup includes:
 - Accessible from Sources Manager, Settings Tab, or command palette
 
 ### 🗂️ Advanced Filtering
-- **Filter by tag** — Dropdown of all 24 recognized security tags
+- **Filter by tag** — Dropdown of the built-in recognized security tags
 - **Filter by date range** — Set "From" and "To" dates
 - Filters applied during scan for efficient results
 
@@ -89,6 +98,8 @@ Each saved writeup includes:
 ### ⚙️ Settings
 - **Output folder**, **limit per source**, **auto-fetch on startup**
 - **Cache management** — Clear seen URLs to re-fetch older writeups
+- **Alert controls** — enable/disable alerts for critical findings and CVEs, request desktop notification permission, and test alerts
+- **CVE keyword management** — maintain a dedicated list of rolling CVE queries used by the built-in CVE topic source
 - Settings accessible from Sources Manager, Settings Tab, or ribbon icons
 
 ### 🎨 UI/UX
@@ -97,7 +108,7 @@ Each saved writeup includes:
 - **Animated progress bar** — Pulsing glow during fetch
 - **Fade-in animations** — Smooth content transitions
 - **Custom thin scrollbars** — Clean scrolling in lists
-- **Two ribbon icons** + **Three command palette commands** + **Status bar widget**
+- **Two ribbon icons** + **Multiple command palette commands** + **Status bar widget**
 
 ## 🚀 Installation
 
@@ -119,9 +130,10 @@ Each saved writeup includes:
 ## 🛠️ Usage
 
 1. Click the **🛡️ ribbon icon** to open the **Sources Manager** — configure sources, watchlist, and settings.
-2. Click the **⬇ ribbon icon** to open the **Fetch modal** — scan, search, sort, preview, and save.
+2. Click the **⬇ ribbon icon** to open the **Collector modal** — scan, search, sort, preview, and save.
 3. Use the **📊 Stats** button to view your analytics dashboard.
-4. Find your writeups in the configured output folder, organized by source.
+4. Use **Topic Search Sources** and **New CVEs** from the Sources Manager to expand discovery beyond RSS feeds.
+5. Find your writeups in the configured output folder, organized by source or topic category.
 
 ## 📜 License
 

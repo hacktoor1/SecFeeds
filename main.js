@@ -11,7 +11,21 @@ const DEFAULT_SETTINGS = {
     lastFetched: '',
     seenUrls: [],
     failedUrls: [],
+    deviceId: '',
     topicSyncHistory: {},
+    alertHistory: {},
+    pendingAlerts: [],
+    cveTopicKeywords: ['cve-2026', 'cve-2025', 'zero-day'],
+    alertSettings: {
+        enabled: true,
+        inAppNotice: true,
+        systemNotification: true,
+        syncAcrossDevices: true,
+        critical: true,
+        newCves: true,
+        cooldownMinutes: 180,
+        maxItemsPerAlert: 3,
+    },
     watchlistKeywords: ['rce','zero-day','critical','account takeover','authentication bypass','privilege escalation'],
     stats: { totalFetched:0, totalFailed:0, bySource:{}, byTag:{}, byMonth:{} },
     sources: [
@@ -221,6 +235,63 @@ function parseDateString(s) {
     try { return new Date(s).toISOString().slice(0,10); } catch { return new Date().toISOString().slice(0,10); }
 }
 
+const TRACKING_QUERY_KEYS = new Set([
+    'source', 'ref', 'ref_src', 'ref_url', 'referral', 'rss',
+    'fbclid', 'gclid', 'mc_cid', 'mc_eid', 'mkt_tok', 's',
+]);
+
+function normalizeWriteupUrl(url) {
+    if (!url) return '';
+    try {
+        const parsed = new URL(String(url).trim());
+        parsed.hash = '';
+
+        for (const key of [...parsed.searchParams.keys()]) {
+            const lower = key.toLowerCase();
+            if (TRACKING_QUERY_KEYS.has(lower) || lower.startsWith('utm_')) {
+                parsed.searchParams.delete(key);
+            }
+        }
+
+        if (parsed.pathname.length > 1) {
+            parsed.pathname = parsed.pathname.replace(/\/+$/, '');
+        }
+
+        return parsed.toString();
+    } catch(e) {
+        return String(url).trim();
+    }
+}
+
+function addSeenUrls(targetSet, ...urls) {
+    for (const url of urls) {
+        const normalized = normalizeWriteupUrl(url);
+        if (normalized) targetSet.add(normalized);
+    }
+}
+
+function normalizeKeywordList(values) {
+    if (Array.isArray(values)) {
+        return uniqueValues(values.map(v => String(v || '').trim().toLowerCase()).filter(Boolean));
+    }
+    return uniqueValues(String(values || '')
+        .split(/[,\n]/)
+        .map(v => v.trim().toLowerCase())
+        .filter(Boolean));
+}
+
+function normalizeCveKeywordList(values) {
+    return normalizeKeywordList(values).map(value => value.replace(/\s+/g, '-'));
+}
+
+function createDeviceId() {
+    return `device-${shortHash(`${Date.now()}-${Math.random()}-${Math.random()}`)}-${Math.random().toString(36).slice(2,8)}`;
+}
+
+function normalizeAlertSettings(settings) {
+    return Object.assign({}, DEFAULT_SETTINGS.alertSettings, settings || {});
+}
+
 function isBoilerplateTitle(title) {
     const lower = String(title || '').toLowerCase().trim();
     if (!lower) return true;
@@ -356,6 +427,43 @@ function shouldKeepTopicResult(url, title, topic) {
     if (!isLikelySecurityWriteupTitle(title)) return false;
     if (!topicMatchesTitle(title, topic)) return false;
     return true;
+}
+
+function summarizeAlertMatches(matches, limit=3) {
+    const top = matches.slice(0, Math.max(1, limit));
+    return top.map(item => item.title).join(' | ');
+}
+
+function buildAlertPayload(matches, sourceLabel, titleLimit=3) {
+    const criticalMatches = matches.filter(item => item.reasons.includes('critical'));
+    const cveMatches = matches.filter(item => item.reasons.includes('cve'));
+    const criticalCount = criticalMatches.length;
+    const cveCount = cveMatches.length;
+    const title = criticalCount > 0 && cveCount > 0
+        ? 'Critical Writeup and New CVE Alert'
+        : criticalCount > 0
+            ? 'Critical Writeup Alert'
+            : 'New CVE Alert';
+
+    const summaryParts = [];
+    if (criticalCount > 0) summaryParts.push(`${criticalCount} critical`);
+    if (cveCount > 0) summaryParts.push(`${cveCount} CVE`);
+    const summary = summaryParts.join(' + ');
+    const sampleTitles = summarizeAlertMatches(matches, titleLimit);
+
+    return {
+        id: `alert-${Date.now()}-${shortHash(sampleTitles + summary)}`,
+        createdAt: new Date().toISOString(),
+        sourceLabel,
+        title,
+        message: `${summary} found during ${sourceLabel}: ${sampleTitles}`.slice(0, 500),
+        items: matches.map(item => ({
+            title: item.title,
+            url: item.url,
+            reasons: item.reasons,
+            cves: item.cves,
+        })),
+    };
 }
 
 function uniqueValues(items) {
@@ -1046,6 +1154,17 @@ function normalizeTopicSource(source) {
     });
 }
 
+function applyDynamicBuiltInTopicSources(settings) {
+    if (!settings) return;
+    settings.cveTopicKeywords = normalizeCveKeywordList(settings.cveTopicKeywords || DEFAULT_SETTINGS.cveTopicKeywords);
+
+    const cveSource = (settings.topicSources || []).find(src => src.id === 'medium-cve-trends');
+    if (cveSource) {
+        cveSource.topics = [...settings.cveTopicKeywords];
+        cveSource.topic = cveSource.topics[0] || 'cve';
+    }
+}
+
 function defaultArticleSelectorForTopicSource(source) {
     try {
         const host = new URL(source.baseUrl || '').hostname.toLowerCase();
@@ -1187,8 +1306,9 @@ async function fetchTopicResults(topicSourceInput, seenUrls, folderMap, outputFo
             const doc = new DOMParser().parseFromString(resp.text, 'text/html');
 
             for (const link of articleLinks) {
-                if (seenUrls.has(link) || results.some(item => item.url === link)) continue;
-                if (isDiscoveryBlockedUrl(link)) continue;
+                const normalizedLink = normalizeWriteupUrl(link);
+                if (seenUrls.has(normalizedLink) || results.some(item => item.normalizedUrl === normalizedLink)) continue;
+                if (isDiscoveryBlockedUrl(normalizedLink)) continue;
 
                 let title = '';
                 const safeLink = link.replace(/"/g, '\\"');
@@ -1201,14 +1321,15 @@ async function fetchTopicResults(topicSourceInput, seenUrls, folderMap, outputFo
                     title = slug.replace(/-[a-f0-9]{8,}$/, '').replace(/[-_]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
                 }
                 if (!title || title.length < 3) continue;
-                if (!shouldKeepTopicResult(link, title, topic)) continue;
+                if (!shouldKeepTopicResult(normalizedLink, title, topic)) continue;
 
                 const tags = uniqueValues([...extractTags(title, [topic]), slugify(topicSource.name), slugify(topic)]);
                 const folder = getTopicFolder(topic, folderMap, outputFolder, topicSource.category);
 
                 results.push({
                     title,
-                    url: link,
+                    url: normalizedLink,
+                    normalizedUrl: normalizedLink,
                     source: topicSource.name,
                     sourceId: topicSource.id,
                     sourceType: topicSource.type,
@@ -1226,6 +1347,7 @@ async function fetchTopicResults(topicSourceInput, seenUrls, folderMap, outputFo
                     severity: detectSeverity(title, tags),
                     topicFolder: folder,
                 });
+                seenUrls.add(normalizedLink);
             }
 
             markTopicSourceSynced(topicSource, topic, options.syncHistory);
@@ -1933,7 +2055,8 @@ class FetchPreviewModal extends obsidian.Modal {
         hdr.createEl('h2', {text: scanLabel});
         const statusEl = contentEl.createDiv({cls: 'wm-scan-status'});
 
-        const seen = new Set((plugin.settings.seenUrls || []).slice(-3000));
+        const folder = plugin.settings.outputFolder || 'writeups';
+        const seen = plugin.buildSeenUrlSet(folder);
         const enabled = plugin.settings.sources.filter(s=>s.enabled);
         const limit = plugin.settings.limitPerSource || 20;
         const watchlist = (plugin.settings.watchlistKeywords || []).map(k=>k.toLowerCase());
@@ -1949,7 +2072,8 @@ class FetchPreviewModal extends obsidian.Modal {
                     const rssItems = await fetchFeedItems(src);
                     for (const item of rssItems) {
                         if (srcCount >= limit) break;
-                        if (seen.has(item.link)) continue;
+                        const normalizedLink = normalizeWriteupUrl(item.link);
+                        if (seen.has(normalizedLink)) continue;
                         const date = parseDateString(item.pubDate);
                         if (this.filterDateFrom && date < this.filterDateFrom) continue;
                         if (this.filterDateTo && date > this.filterDateTo) continue;
@@ -1961,12 +2085,13 @@ class FetchPreviewModal extends obsidian.Modal {
                         const isWatchlisted = watchlist.some(k => titleLower.includes(k));
 
                         foundItems.push({
-                            title: item.title, url: item.link, source: src.name,
+                            title: item.title, url: normalizedLink, normalizedUrl: normalizedLink, source: src.name,
                             sourceId: src.id, articleSelector: src.articleSelector || 'article',
                             date, tags, author: item.author, rssBody: htmlToMd(item.desc),
                             checked: true, status: 'pending', watchlisted: isWatchlisted,
                             severity: detectSeverity(item.title, tags),
                         });
+                        seen.add(normalizedLink);
                         srcCount++;
                     }
                 } catch(e) {
@@ -2009,6 +2134,7 @@ class FetchPreviewModal extends obsidian.Modal {
         }
 
         this.items = foundItems;
+        await plugin.notifyImportantFindings(foundItems, mode === true ? 'topic scan' : mode === 'all' ? 'full scan' : 'feed scan');
         if (foundItems.length === 0) { this.renderNoResults(); }
         else { this.renderPreview(); }
     }
@@ -2145,7 +2271,7 @@ class FetchPreviewModal extends obsidian.Modal {
 
         const folder = plugin.settings.outputFolder || 'writeups';
         await plugin.ensureFolder(folder);
-        const seen = [...(plugin.settings.seenUrls || [])];
+        const seen = plugin.buildSeenUrlSet(folder);
 
         // Ensure stats object exists
         if (!plugin.settings.stats) plugin.settings.stats = {totalFetched:0,totalFailed:0,bySource:{},byTag:{},byMonth:{}};
@@ -2184,8 +2310,11 @@ class FetchPreviewModal extends obsidian.Modal {
             }
 
             try {
-                await plugin.saveWriteup(folder, {...item, body, originalUrl, fetchedFrom, fallbackUsed, fetchStatus});
-                seen.push(item.url);
+                const saved = await plugin.saveWriteup(folder, {...item, body, originalUrl, fetchedFrom, fallbackUsed, fetchStatus}, seen);
+                if (!saved) {
+                    logRow.querySelector('.wm-log-icon').setText('↩️ ');
+                    continue;
+                }
                 this.savedCount++;
                 // Update stats
                 const s = plugin.settings.stats;
@@ -2207,7 +2336,7 @@ class FetchPreviewModal extends obsidian.Modal {
         progFill.style.width = '100%';
         progLabel.setText(`${this.savedCount} / ${selected.length}`);
         await plugin.updateIndex(folder);
-        plugin.settings.seenUrls = seen.slice(-3000);
+        plugin.settings.seenUrls = [...seen].slice(-3000);
         plugin.settings.failedUrls = this.failedItems.map(i=>i.url);
         plugin.settings.lastFetched = new Date().toLocaleString();
         await plugin.saveSettings();
@@ -2407,6 +2536,106 @@ class SourcesModal extends obsidian.Modal {
             this.render();
         });
 
+        // CVE keywords
+        contentEl.createEl('h3', {text: 'New CVEs', cls: 'wm-section-title'});
+        const cveHint = contentEl.createEl('p', {
+            text: 'Add specific CVE IDs or rolling CVE search terms here. These values automatically feed the built-in Medium CVE topic source.',
+            cls: 'wm-hint',
+        });
+        cveHint.style.marginTop = '0';
+        const cveRow = contentEl.createDiv({cls: 'wm-add'});
+        const cveIn = cveRow.createEl('input', {type:'text', placeholder:'Add CVE term  (e.g. cve-2026-12345 or cve-2026)'});
+        cveIn.style.flex = '1';
+        const cveAddBtn = cveRow.createEl('button', {text:'+ Add CVE', cls:'wm-btn-add'});
+        cveAddBtn.addEventListener('click', async () => {
+            const terms = normalizeCveKeywordList(cveIn.value);
+            if (!terms.length) return;
+            plugin.settings.cveTopicKeywords = normalizeCveKeywordList([
+                ...(plugin.settings.cveTopicKeywords || []),
+                ...terms,
+            ]);
+            applyDynamicBuiltInTopicSources(plugin.settings);
+            await plugin.saveSettings();
+            cveIn.value = '';
+            this.render();
+        });
+
+        const cveList = contentEl.createDiv({cls:'wm-watchlist-tags'});
+        for (const kw of (plugin.settings.cveTopicKeywords || [])) {
+            const pill = cveList.createSpan({cls:'wm-watchlist-pill'});
+            pill.createSpan({text: `CVE ${kw}`});
+            const del = pill.createSpan({text:' ✕', cls:'wm-watchlist-del'});
+            del.addEventListener('click', async () => {
+                plugin.settings.cveTopicKeywords = normalizeCveKeywordList((plugin.settings.cveTopicKeywords || []).filter(k => k !== kw));
+                applyDynamicBuiltInTopicSources(plugin.settings);
+                await plugin.saveSettings();
+                this.render();
+            });
+        }
+
+        // Alerts
+        contentEl.createEl('h3', {text: 'Alerts', cls: 'wm-section-title'});
+        const alertHint = contentEl.createEl('p', {
+            text: 'Important alerts appear inside Obsidian on mobile and desktop. Desktop system notifications work where the platform grants permission. Cross-device alerts are best-effort if your plugin data syncs across devices.',
+            cls: 'wm-hint',
+        });
+        alertHint.style.marginTop = '0';
+        const alertSettings = normalizeAlertSettings(plugin.settings.alertSettings);
+        const alertRow = contentEl.createDiv({cls: 'wm-add wm-topic-add'});
+        const alertOpts = alertRow.createDiv({cls:'wm-topic-options'});
+
+        const makeAlertToggle = (label, key) => {
+            const wrap = alertOpts.createEl('label', {cls:'wm-topic-toggle'});
+            const input = wrap.createEl('input', {type:'checkbox'});
+            input.checked = !!alertSettings[key];
+            input.addEventListener('change', async () => {
+                plugin.settings.alertSettings = Object.assign({}, normalizeAlertSettings(plugin.settings.alertSettings), { [key]: input.checked });
+                await plugin.saveSettings();
+            });
+            wrap.createSpan({text: label});
+        };
+
+        makeAlertToggle('Enable Alerts', 'enabled');
+        makeAlertToggle('Critical', 'critical');
+        makeAlertToggle('New CVEs', 'newCves');
+        makeAlertToggle('In-App', 'inAppNotice');
+        makeAlertToggle('Desktop Notify', 'systemNotification');
+        makeAlertToggle('Sync To Other Devices', 'syncAcrossDevices');
+
+        const cooldownWrap = alertRow.createDiv({cls:'wm-bar-field'});
+        cooldownWrap.createEl('label', {text: 'Cooldown (min)'});
+        const cooldownIn = cooldownWrap.createEl('input', {type:'number', placeholder:'180'});
+        cooldownIn.style.width = '90px';
+        cooldownIn.value = String(alertSettings.cooldownMinutes || 180);
+        cooldownIn.addEventListener('change', async () => {
+            plugin.settings.alertSettings = Object.assign({}, normalizeAlertSettings(plugin.settings.alertSettings), {
+                cooldownMinutes: Math.max(0, parseInt(cooldownIn.value) || 180),
+            });
+            await plugin.saveSettings();
+        });
+
+        const alertBtnRow = contentEl.createDiv({cls:'wm-sel-row'});
+        const permissionBtn = alertBtnRow.createEl('button', {text:'🔔 Enable Desktop Permission', cls:'wm-btn-sm'});
+        permissionBtn.addEventListener('click', async () => {
+            const result = await plugin.requestSystemNotificationPermission();
+            if (result === 'granted') new obsidian.Notice('Desktop notification permission granted');
+            else if (result === 'denied') new obsidian.Notice('Desktop notification permission denied');
+            else if (result === 'unsupported') new obsidian.Notice('System notifications are not supported on this platform');
+            else new obsidian.Notice(`Notification permission result: ${result}`);
+        });
+
+        const testAlertBtn = alertBtnRow.createEl('button', {text:'🧪 Test Alert', cls:'wm-btn-sm'});
+        testAlertBtn.addEventListener('click', async () => {
+            await plugin.notifyImportantFindings([{
+                title: 'Test Critical CVE Alert',
+                url: `https://example.local/test-alert-${Date.now()}`,
+                tags: ['cve', 'writeup', 'security'],
+                severity: 'critical',
+                rssBody: 'CVE-2026-12345 proof of concept',
+            }], 'test alert');
+            this.render();
+        });
+
         // Watchlist
         contentEl.createEl('h3', {text: 'Watchlist Keywords', cls: 'wm-section-title'});
         const watchRow = contentEl.createDiv({cls: 'wm-add'});
@@ -2450,6 +2679,8 @@ class SourcesModal extends obsidian.Modal {
                 sources: plugin.settings.sources || [],
                 topicSources: plugin.settings.topicSources || [],
                 topicFolderMap: plugin.settings.topicFolderMap || {},
+                cveTopicKeywords: plugin.settings.cveTopicKeywords || [],
+                alertSettings: plugin.settings.alertSettings || {},
                 watchlistKeywords: plugin.settings.watchlistKeywords || [],
             }, null, 2);
             try {
@@ -2536,12 +2767,22 @@ class SourcesModal extends obsidian.Modal {
                 if (parsed?.topicFolderMap && typeof parsed.topicFolderMap === 'object') {
                     plugin.settings.topicFolderMap = Object.assign({}, plugin.settings.topicFolderMap || {}, parsed.topicFolderMap);
                 }
+                if (Array.isArray(parsed?.cveTopicKeywords)) {
+                    plugin.settings.cveTopicKeywords = normalizeCveKeywordList([
+                        ...(plugin.settings.cveTopicKeywords || []),
+                        ...parsed.cveTopicKeywords,
+                    ]);
+                }
+                if (parsed?.alertSettings && typeof parsed.alertSettings === 'object') {
+                    plugin.settings.alertSettings = normalizeAlertSettings(Object.assign({}, plugin.settings.alertSettings || {}, parsed.alertSettings));
+                }
                 if (Array.isArray(parsed?.watchlistKeywords)) {
                     plugin.settings.watchlistKeywords = uniqueValues([
                         ...(plugin.settings.watchlistKeywords || []),
                         ...parsed.watchlistKeywords.map(k => String(k || '').trim().toLowerCase()).filter(Boolean),
                     ]);
                 }
+                applyDynamicBuiltInTopicSources(plugin.settings);
                 await plugin.saveSettings();
                 new obsidian.Notice(`✅ Imported ${added} source${added!==1?'s':''} and ${addedTopics} topic source${addedTopics!==1?'s':''}`);
                 this.render(); this.checkHealth();
@@ -2708,6 +2949,7 @@ class WriteupSettingTab extends obsidian.PluginSettingTab {
         new obsidian.Setting(containerEl).setName('Sources Manager').setDesc('Manage RSS sources, topic sources, filters, and output settings').addButton(b=>b.setButtonText('Open').onClick(()=>new SourcesModal(this.app,this.plugin).open()));
         new obsidian.Setting(containerEl).setName('Collect Writeups').setDesc('Scan, preview, and download new writeups').addButton(b=>b.setButtonText('Open Collector').setCta().onClick(()=>new FetchPreviewModal(this.app,this.plugin).open()));
         new obsidian.Setting(containerEl).setName('Topic Sources').setDesc(`${(this.plugin.settings.topicSources || []).length} topic source(s) configured for keyword-based discovery`).addButton(b=>b.setButtonText('Manage').onClick(()=>new SourcesModal(this.app,this.plugin).open()));
+        new obsidian.Setting(containerEl).setName('Important Alerts').setDesc('Alert on critical findings and new CVEs across desktop and mobile devices where supported').addButton(b=>b.setButtonText('Configure').onClick(()=>new SourcesModal(this.app,this.plugin).open()));
         new obsidian.Setting(containerEl).setName('Statistics').setDesc('View fetch statistics and analytics').addButton(b=>b.setButtonText('View').onClick(()=>new StatsModal(this.app,this.plugin).open()));
         new obsidian.Setting(containerEl).setName('Watchlist Keywords').setDesc('Comma-separated keywords to highlight in scan results')
             .addText(t => {
@@ -2746,17 +2988,34 @@ class SecurityWriteupCollectorPlugin extends obsidian.Plugin {
         this.statusBarItem = this.addStatusBarItem();
         this.refreshStatusBar();
         this.statusBarItem.onClickEvent(() => new SourcesModal(this.app,this).open());
+        this.app.workspace.onLayoutReady(() => {
+            this.processPendingAlerts().catch(e => console.error('SecFeeds: pending alert processing failed:', e));
+        });
 
         if (this.settings.autoFetchOnStartup) {
             this._autoFetchTimer = setTimeout(async () => {
                 try {
                     const enabled = this.settings.sources.filter(s=>s.enabled);
-                    const seen = new Set((this.settings.seenUrls || []).slice(-3000));
+                    const seen = this.buildSeenUrlSet(this.settings.outputFolder || 'writeups');
                     let newCount = 0;
+                    const alertCandidates = [];
                     for (const src of enabled) {
                         try {
                             const items = await fetchFeedItems(src);
-                            newCount += items.filter(i => !seen.has(i.link)).length;
+                            for (const item of items) {
+                                const normalized = normalizeWriteupUrl(item.link);
+                                if (seen.has(normalized)) continue;
+                                newCount++;
+                                const tags = extractTags(item.title, item.cats);
+                                alertCandidates.push({
+                                    title: item.title,
+                                    url: normalized,
+                                    severity: detectSeverity(item.title, tags),
+                                    tags,
+                                    rssBody: htmlToMd(item.desc || ''),
+                                });
+                                seen.add(normalized);
+                            }
                         } catch(e) {}
                     }
                     const topicEnabled = (this.settings.topicSources || []).filter(s => s.enabled);
@@ -2770,8 +3029,10 @@ class SecurityWriteupCollectorPlugin extends obsidian.Plugin {
                                 { syncHistory: this.settings.topicSyncHistory || {}, respectSchedule: true }
                             );
                             newCount += items.length;
+                            alertCandidates.push(...items);
                         } catch(e) {}
                     }
+                    await this.notifyImportantFindings(alertCandidates, 'startup scan');
                     await this.saveSettings();
                     if (newCount > 0) {
                         new obsidian.Notice(`🔐 ${newCount} new writeup${newCount!==1?'s':''} available. Open Fetch to download.`);
@@ -2791,6 +3052,164 @@ class SecurityWriteupCollectorPlugin extends obsidian.Plugin {
         this.statusBarItem?.setText(f>0 ? `🔐 ${n} writeups ⚠️${f}` : `🔐 ${n} writeups`);
     }
 
+    pruneAlertState() {
+        const maxAgeMs = 7 * 24 * 60 * 60 * 1000;
+        const now = Date.now();
+
+        const nextHistory = {};
+        for (const [url, alertedAt] of Object.entries(this.settings.alertHistory || {})) {
+            const ts = new Date(alertedAt).getTime();
+            if (Number.isFinite(ts) && (now - ts) <= maxAgeMs) nextHistory[url] = alertedAt;
+        }
+        this.settings.alertHistory = nextHistory;
+
+        this.settings.pendingAlerts = (this.settings.pendingAlerts || [])
+            .filter(alert => {
+                const ts = new Date(alert.createdAt || 0).getTime();
+                return Number.isFinite(ts) && (now - ts) <= maxAgeMs;
+            })
+            .slice(-50);
+    }
+
+    getAlertMatches(items) {
+        const alertSettings = normalizeAlertSettings(this.settings.alertSettings);
+        if (!alertSettings.enabled) return [];
+
+        const history = this.settings.alertHistory || {};
+        const cooldownMs = Math.max(0, Number(alertSettings.cooldownMinutes || 0)) * 60 * 1000;
+        const matches = [];
+
+        for (const item of items || []) {
+            const url = normalizeWriteupUrl(item.originalUrl || item.url);
+            if (!url) continue;
+
+            const reasons = [];
+            const title = item.title || '';
+            const tags = item.tags || [];
+            const severity = item.severity || detectSeverity(title, tags);
+            const cves = extractCVEs(`${title} ${(item.rssBody || '')}`);
+
+            if (alertSettings.critical && severity === 'critical') reasons.push('critical');
+            if (alertSettings.newCves && cves.length > 0) reasons.push('cve');
+            if (reasons.length === 0) continue;
+
+            const alertedAt = history[url];
+            if (alertedAt) {
+                const ts = new Date(alertedAt).getTime();
+                if (Number.isFinite(ts) && cooldownMs > 0 && (Date.now() - ts) < cooldownMs) continue;
+            }
+
+            matches.push({
+                title,
+                url,
+                reasons,
+                cves,
+                severity,
+            });
+        }
+
+        return matches;
+    }
+
+    markAlerted(matches) {
+        if (!this.settings.alertHistory || typeof this.settings.alertHistory !== 'object') {
+            this.settings.alertHistory = {};
+        }
+        const now = new Date().toISOString();
+        for (const match of matches) {
+            this.settings.alertHistory[normalizeWriteupUrl(match.url)] = now;
+        }
+    }
+
+    sendInAppAlert(payload) {
+        const alertSettings = normalizeAlertSettings(this.settings.alertSettings);
+        if (alertSettings.inAppNotice !== false) {
+            new obsidian.Notice(`🚨 ${payload.message}`, 12000);
+        }
+
+        const canUseSystemNotification = alertSettings.systemNotification !== false
+            && typeof Notification !== 'undefined'
+            && Notification.permission === 'granted';
+
+        if (canUseSystemNotification) {
+            try {
+                new Notification(payload.title, { body: payload.message.slice(0, 180) });
+            } catch(e) {
+                console.warn('SecFeeds: system notification failed:', e?.message || e);
+            }
+        }
+    }
+
+    enqueueAlertForSync(payload) {
+        const alertSettings = normalizeAlertSettings(this.settings.alertSettings);
+        if (!alertSettings.syncAcrossDevices) return;
+        if (!Array.isArray(this.settings.pendingAlerts)) this.settings.pendingAlerts = [];
+
+        this.settings.pendingAlerts.push(Object.assign({}, payload, {
+            deliveredTo: [this.settings.deviceId],
+        }));
+        this.settings.pendingAlerts = this.settings.pendingAlerts.slice(-50);
+    }
+
+    async notifyImportantFindings(items, sourceLabel='scan') {
+        this.pruneAlertState();
+        const alertSettings = normalizeAlertSettings(this.settings.alertSettings);
+        const matches = this.getAlertMatches(items);
+        if (!matches.length) return false;
+
+        const payload = buildAlertPayload(matches, sourceLabel, Math.max(1, Number(alertSettings.maxItemsPerAlert || 3)));
+        this.sendInAppAlert(payload);
+        this.enqueueAlertForSync(payload);
+        this.markAlerted(matches);
+        await this.saveSettings();
+        return true;
+    }
+
+    async processPendingAlerts() {
+        this.pruneAlertState();
+        const alertSettings = normalizeAlertSettings(this.settings.alertSettings);
+        if (!alertSettings.enabled || !alertSettings.syncAcrossDevices) {
+            await this.saveSettings();
+            return;
+        }
+
+        let changed = false;
+        for (const alert of (this.settings.pendingAlerts || [])) {
+            if (!Array.isArray(alert.deliveredTo)) alert.deliveredTo = [];
+            if (alert.deliveredTo.includes(this.settings.deviceId)) continue;
+            this.sendInAppAlert(alert);
+            alert.deliveredTo.push(this.settings.deviceId);
+            changed = true;
+        }
+
+        if (changed) await this.saveSettings();
+    }
+
+    async requestSystemNotificationPermission() {
+        if (typeof Notification === 'undefined' || typeof Notification.requestPermission !== 'function') return 'unsupported';
+        try {
+            return await Notification.requestPermission();
+        } catch(e) {
+            console.warn('SecFeeds: notification permission request failed:', e?.message || e);
+            return 'error';
+        }
+    }
+
+    buildSeenUrlSet(baseFolder) {
+        const seen = new Set();
+        addSeenUrls(seen, ...((this.settings.seenUrls || []).slice(-3000)));
+
+        const files = this.app.vault.getMarkdownFiles()
+            .filter(f => f.path.startsWith(`${baseFolder}/`) && f.name !== 'index.md');
+
+        for (const file of files) {
+            const frontmatter = this.app.metadataCache.getFileCache(file)?.frontmatter || {};
+            addSeenUrls(seen, frontmatter.url, frontmatter.original_url, frontmatter.fetched_from);
+        }
+
+        return seen;
+    }
+
     async ensureFolder(path) {
         const parts = path.split('/'); let cur='';
         for (const p of parts) {
@@ -2801,7 +3220,18 @@ class SecurityWriteupCollectorPlugin extends obsidian.Plugin {
         }
     }
 
-    async saveWriteup(baseFolder, item) {
+    async saveWriteup(baseFolder, item, seenSet=null) {
+        const dedupUrls = [
+            item.normalizedUrl,
+            item.originalUrl,
+            item.url,
+            item.fetchedFrom,
+        ].map(normalizeWriteupUrl).filter(Boolean);
+
+        if (seenSet && dedupUrls.some(url => seenSet.has(url))) {
+            return false;
+        }
+
         const filename = safeFilename(item.title);
         // Use topicFolder if available, else build from baseFolder + source
         const sub = item.topicFolder ? item.topicFolder : `${baseFolder}/${slugify(item.source)}`;
@@ -2810,8 +3240,10 @@ class SecurityWriteupCollectorPlugin extends obsidian.Plugin {
         if (this.app.vault.getFileByPath(path)) {
             path = `${sub}/${filename} (${shortHash(item.url)}).md`;
         }
-        if (this.app.vault.getFileByPath(path)) return;
+        if (this.app.vault.getFileByPath(path)) return false;
         await this.app.vault.create(path, buildMd(item));
+        if (seenSet) addSeenUrls(seenSet, ...dedupUrls);
+        return true;
     }
 
     async updateIndex(folder) {
@@ -2849,9 +3281,14 @@ class SecurityWriteupCollectorPlugin extends obsidian.Plugin {
         for (const src of this.settings.sources) {
             if (defaultIds.has(src.id)) src.isBuiltIn = true;
         }
+        if (!this.settings.deviceId) this.settings.deviceId = createDeviceId();
         if (!this.settings.seenUrls) this.settings.seenUrls = [];
         if (!this.settings.failedUrls) this.settings.failedUrls = [];
         if (!this.settings.topicSyncHistory || typeof this.settings.topicSyncHistory !== 'object') this.settings.topicSyncHistory = {};
+        if (!this.settings.alertHistory || typeof this.settings.alertHistory !== 'object') this.settings.alertHistory = {};
+        if (!Array.isArray(this.settings.pendingAlerts)) this.settings.pendingAlerts = [];
+        this.settings.alertSettings = normalizeAlertSettings(this.settings.alertSettings);
+        this.settings.cveTopicKeywords = normalizeCveKeywordList(this.settings.cveTopicKeywords || DEFAULT_SETTINGS.cveTopicKeywords);
         if (!this.settings.watchlistKeywords) this.settings.watchlistKeywords = [...DEFAULT_SETTINGS.watchlistKeywords];
         if (!this.settings.stats) this.settings.stats = {totalFetched:0,totalFailed:0,bySource:{},byTag:{},byMonth:{}};
         // Deep merge topic sources
@@ -2871,6 +3308,8 @@ class SecurityWriteupCollectorPlugin extends obsidian.Plugin {
         }
         // Merge topic folder map (user overrides take priority)
         this.settings.topicFolderMap = Object.assign({}, DEFAULT_SETTINGS.topicFolderMap, this.settings.topicFolderMap || {});
+        applyDynamicBuiltInTopicSources(this.settings);
+        this.pruneAlertState();
     }
     async saveSettings() { await this.saveData(this.settings); }
 }
