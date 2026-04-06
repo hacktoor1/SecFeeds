@@ -1,6 +1,6 @@
 # 🔐 Security Writeup Collector
 
-An Obsidian plugin that automatically fetches, previews, and saves full-content security writeups from popular bug bounty and infosec platforms — directly into your vault as clean, richly-formatted Markdown notes.
+An Obsidian plugin that collects cybersecurity writeups offline into your vault as clean, richly-formatted Markdown notes. It combines RSS feeds, topic-based discovery, Medium fallback handling, duplicate prevention, Egyptian-Arabic summaries, reusable test cases, and local alerts for important findings.
 
 ## ✨ Features
 
@@ -21,7 +21,8 @@ An Obsidian plugin that automatically fetches, previews, and saves full-content 
 ### 📄 Full Article Scraping
 - Fetches the **complete article content** from the original page (not just the RSS snippet)
 - Intelligent **article extraction** using configurable CSS selectors per source
-- **Medium paywall fallback** — tries the original Medium URL first, then automatically falls back to Freedium only when the article is locked or incomplete
+- **Medium paywall fallback** — tries the original Medium URL first, detects premium / blocked / incomplete pages, then falls back to Freedium only when needed
+- **Fetch provenance tracking** — stores both the original article URL and the actual fetched URL in frontmatter
 - Falls back to RSS body when full-content fetch fails
 - Toggle full-content mode on/off for faster RSS-only imports
 
@@ -30,7 +31,7 @@ An Obsidian plugin that automatically fetches, previews, and saves full-content 
 - **Multi-topic sync** — register one source with multiple topics like `idor, xss, ssrf, sqli`
 - **Auto-folder routing** — map topics to folders like `Writeups/Web/IDOR`, with `Writeups/Unsorted/<topic>` as fallback
 - **Per-source sync controls** — configure enabled state, auto-sync, and sync frequency
-- **Built-in topic packs** — ships with ready-to-use coverage for Web, Mobile, Network, Active Directory, Bug Bounty platforms, Recon, and CVE tracking
+- **Built-in topic packs** — ships with ready-to-use coverage for Web, Mobile, Network, Active Directory, Bug Bounty platforms, Recon, CVE tracking, and zero-day monitoring
 - **New CVEs input** — add rolling CVE search terms such as `cve-2026` or exact IDs like `cve-2026-12345` directly from settings
 
 ### 🔍 Scan & Preview Workflow
@@ -40,6 +41,7 @@ An Obsidian plugin that automatically fetches, previews, and saves full-content 
 - **📋 Sort options** — Sort by newest, oldest, severity, source, or title
 - **Select / deselect** individual writeups or use batch controls
 - **Robust deduplication** — normalizes URLs, strips tracking parameters, checks cached URLs, and checks existing notes in the vault before showing or saving anything
+- **Save-time duplicate guard** — even if a duplicate reaches the modal, it is skipped again before file creation
 
 ### ⭐ Keyword Watchlist
 - Configure a set of **watchlist keywords** (e.g. `rce`, `zero-day`, `authentication bypass`)
@@ -61,9 +63,16 @@ An Obsidian plugin that automatically fetches, previews, and saves full-content 
 - **Platform detection** — Recognizes HackerOne, Bugcrowd, Intigriti, HackTheBox, etc.
 - **Severity-colored tag pills** in the preview UI
 
+### 🧹 Content Processing Pipeline
+- **Fetch → Clean → Summarize → Generate Test Case → Save Markdown**
+- **Aggressive cleanup** — removes ads, newsletter blocks, related-post cards, repeated headers, share buttons, boilerplate, and noisy page chrome
+- **Egyptian Arabic summary** — inserts a concise revision-friendly summary directly after the frontmatter
+- **Test case generator** — appends a reusable block with objective, steps, payload, vulnerable behavior, secure behavior, and inferred metadata
+- **AI-style enrichment heuristics** — fills severity, CWE, OWASP category, attack flow, and extracted CVEs when possible
+
 ### 📝 Rich Markdown Output
 Each saved writeup includes:
-- **Enhanced YAML frontmatter** — `reading_time`, `word_count`, `severity`, `platform`, `cve_ids`, `excerpt`
+- **Enhanced YAML frontmatter** — `reading_time`, `word_count`, `severity`, `platform`, `cve_ids`, `excerpt`, `original_url`, `fetched_from`, `fallback_used`, `fetch_status`
 - **Egyptian Arabic summary block** — concise revision-friendly notes directly after the frontmatter
 - **Reusable test case block** — copy-friendly vulnerability checklist with payload, secure behavior, CWE, OWASP, and attack flow
 - **Info card callout** — Visual metadata table at the top with all details
@@ -134,6 +143,49 @@ Each saved writeup includes:
 3. Use the **📊 Stats** button to view your analytics dashboard.
 4. Use **Topic Search Sources** and **New CVEs** from the Sources Manager to expand discovery beyond RSS feeds.
 5. Find your writeups in the configured output folder, organized by source or topic category.
+
+## 🧠 How It Works
+
+### Medium Fallback Flow
+1. The plugin fetches the original Medium URL first.
+2. It validates the response for title, body quality, structure, blocked HTML, and common paywall markers.
+3. If the original article is premium, incomplete, or blocked, it retries through `https://freedium-mirror.cfd/<original-url>`.
+4. The saved note keeps both `original_url` and `fetched_from` so you can see exactly what happened.
+
+### Duplicate Prevention
+1. URLs are normalized before comparison.
+2. Tracking parameters and fragments are removed.
+3. Existing vault notes are checked through frontmatter fields such as `url`, `original_url`, and `fetched_from`.
+4. A second duplicate check runs again during save to prevent accidental re-imports.
+
+### Built-In Commands
+- `Open Sources Manager`
+- `Collect Writeups (with preview)`
+- `Scan Topic Sources`
+- `View Statistics`
+
+## 📝 Saved Note Example
+
+```yaml
+---
+title: SSRF AWS Metadata Writeup
+source: Medium
+original_url: https://medium.com/@author/ssrf-aws-metadata
+fetched_from: https://freedium-mirror.cfd/https://medium.com/@author/ssrf-aws-metadata
+fallback_used: true
+fetch_status: fetched
+severity: high
+cwe: CWE-918
+owasp: Security Misconfiguration
+topic: ssrf
+---
+```
+
+The body is saved as note-friendly Markdown with:
+- a summary callout in Egyptian Arabic
+- a cleaned writeup body
+- a reusable `Test Case` section
+- Dataview-friendly metadata for later filtering
 
 ## 📜 License
 
