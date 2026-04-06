@@ -39,6 +39,15 @@ const DEFAULT_SETTINGS = {
         { id:'medium-sqli',  name:'Medium', type:'search_source', baseUrl:'https://medium.com/search?q=', topic:'sqli', topics:['sqli'], category:'Web/SQLi', syncFrequency:'daily', autoSync:true, enabled:true },
         { id:'medium-rce',   name:'Medium', type:'search_source', baseUrl:'https://medium.com/search?q=', topic:'rce', topics:['rce'], category:'Web/RCE', syncFrequency:'daily', autoSync:true, enabled:true },
         { id:'medium-bug-bounty', name:'Medium', type:'search_source', baseUrl:'https://medium.com/search?q=', topic:'bug bounty writeup', topics:['bug bounty writeup'], category:'Bug-Bounty', syncFrequency:'weekly', autoSync:true, enabled:true },
+        { id:'medium-web-extra', name:'Medium', type:'search_source', baseUrl:'https://medium.com/search?q=', topic:'csrf', topics:['csrf','xxe','lfi','path traversal','ssti','deserialization','open redirect','file upload','command injection'], category:'Web/{topic}', syncFrequency:'daily', autoSync:true, enabled:true },
+        { id:'medium-web-edge', name:'Medium', type:'search_source', baseUrl:'https://medium.com/search?q=', topic:'graphql', topics:['graphql','api security','jwt','oauth','cors','prototype pollution','request smuggling','cache poisoning','host header injection'], category:'Web/{topic}', syncFrequency:'daily', autoSync:true, enabled:true },
+        { id:'medium-access-control', name:'Medium', type:'search_source', baseUrl:'https://medium.com/search?q=', topic:'authorization bypass', topics:['authorization bypass','authentication bypass','broken access control','privilege escalation','account takeover','race condition','business logic'], category:'Access-Control/{topic}', syncFrequency:'daily', autoSync:true, enabled:true },
+        { id:'medium-recon', name:'Medium', type:'search_source', baseUrl:'https://medium.com/search?q=', topic:'subdomain takeover', topics:['subdomain takeover','recon','osint','exposed secrets'], category:'Recon/{topic}', syncFrequency:'weekly', autoSync:true, enabled:true },
+        { id:'medium-cve-trends', name:'Medium', type:'search_source', baseUrl:'https://medium.com/search?q=', topic:'cve-2026', topics:['cve-2026','cve-2025','zero-day'], category:'CVE/{topic}', syncFrequency:'daily', autoSync:true, enabled:true },
+        { id:'medium-platform-writeups', name:'Medium', type:'search_source', baseUrl:'https://medium.com/search?q=', topic:'hackerone', topics:['hackerone','bugcrowd','intigriti','yeswehack','synack'], category:'Bug-Bounty/{topic}', syncFrequency:'weekly', autoSync:true, enabled:true },
+        { id:'medium-mobile', name:'Medium', type:'search_source', baseUrl:'https://medium.com/search?q=', topic:'android', topics:['android','ios','mobile app','webview','deep link','intent redirection','content provider','mobile pentest','apk reverse engineering'], category:'Mobile/{topic}', syncFrequency:'weekly', autoSync:true, enabled:true },
+        { id:'medium-network', name:'Medium', type:'search_source', baseUrl:'https://medium.com/search?q=', topic:'network security', topics:['network security','dns','smb','vpn','wifi','firewall bypass','packet capture','mitm','network pivoting'], category:'Network/{topic}', syncFrequency:'weekly', autoSync:true, enabled:true },
+        { id:'medium-active-directory', name:'Medium', type:'search_source', baseUrl:'https://medium.com/search?q=', topic:'active directory', topics:['active directory','kerberos','ntlm','ldap','ad cs','gpo abuse','delegation abuse','bloodhound','domain escalation'], category:'Active-Directory/{topic}', syncFrequency:'weekly', autoSync:true, enabled:true },
     ],
     topicFolderMap: {
         'idor': 'Web/IDOR', 'xss': 'Web/XSS', 'ssrf': 'Web/SSRF',
@@ -48,6 +57,89 @@ const DEFAULT_SETTINGS = {
         'auth': 'Web/Auth', 'ato': 'Web/ATO', 'privesc': 'Web/Privesc',
         'open-redirect': 'Web/Open-Redirect', 'api-security': 'Web/API',
         'graphql': 'Web/GraphQL', 'mobile': 'Mobile',
+        'path traversal': 'Web/Path-Traversal',
+        'path-traversal': 'Web/Path-Traversal',
+        'file upload': 'Web/File-Upload',
+        'file-upload': 'Web/File-Upload',
+        'command injection': 'Web/Command-Injection',
+        'command-injection': 'Web/Command-Injection',
+        'prototype pollution': 'Web/Prototype-Pollution',
+        'prototype-pollution': 'Web/Prototype-Pollution',
+        'request smuggling': 'Web/Request-Smuggling',
+        'request-smuggling': 'Web/Request-Smuggling',
+        'cache poisoning': 'Web/Cache-Poisoning',
+        'cache-poisoning': 'Web/Cache-Poisoning',
+        'host header injection': 'Web/Host-Header-Injection',
+        'host-header-injection': 'Web/Host-Header-Injection',
+        'jwt': 'Web/JWT',
+        'oauth': 'Web/OAuth',
+        'cors': 'Web/CORS',
+        'authorization bypass': 'Access-Control/Authorization-Bypass',
+        'authorization-bypass': 'Access-Control/Authorization-Bypass',
+        'authentication bypass': 'Access-Control/Authentication-Bypass',
+        'authentication-bypass': 'Access-Control/Authentication-Bypass',
+        'broken access control': 'Access-Control/Broken-Access-Control',
+        'broken-access-control': 'Access-Control/Broken-Access-Control',
+        'privilege escalation': 'Access-Control/Privilege-Escalation',
+        'privilege-escalation': 'Access-Control/Privilege-Escalation',
+        'account takeover': 'Access-Control/Account-Takeover',
+        'account-takeover': 'Access-Control/Account-Takeover',
+        'race condition': 'Access-Control/Race-Condition',
+        'business logic': 'Access-Control/Business-Logic',
+        'business-logic': 'Access-Control/Business-Logic',
+        'subdomain takeover': 'Recon/Subdomain-Takeover',
+        'subdomain-takeover': 'Recon/Subdomain-Takeover',
+        'osint': 'Recon/OSINT',
+        'exposed secrets': 'Recon/Exposed-Secrets',
+        'exposed-secrets': 'Recon/Exposed-Secrets',
+        'hackerone': 'Bug-Bounty/HackerOne',
+        'bugcrowd': 'Bug-Bounty/Bugcrowd',
+        'intigriti': 'Bug-Bounty/Intigriti',
+        'yeswehack': 'Bug-Bounty/YesWeHack',
+        'synack': 'Bug-Bounty/Synack',
+        'zero-day': 'CVE/Zero-Day',
+        'android': 'Mobile/Android',
+        'ios': 'Mobile/iOS',
+        'mobile app': 'Mobile/App',
+        'mobile-app': 'Mobile/App',
+        'webview': 'Mobile/WebView',
+        'deep link': 'Mobile/Deep-Link',
+        'deep-link': 'Mobile/Deep-Link',
+        'intent redirection': 'Mobile/Intent-Redirection',
+        'intent-redirection': 'Mobile/Intent-Redirection',
+        'content provider': 'Mobile/Content-Provider',
+        'content-provider': 'Mobile/Content-Provider',
+        'mobile pentest': 'Mobile/Pentest',
+        'mobile-pentest': 'Mobile/Pentest',
+        'apk reverse engineering': 'Mobile/Reverse-Engineering',
+        'apk-reverse-engineering': 'Mobile/Reverse-Engineering',
+        'network security': 'Network/Security',
+        'network-security': 'Network/Security',
+        'dns': 'Network/DNS',
+        'smb': 'Network/SMB',
+        'vpn': 'Network/VPN',
+        'wifi': 'Network/WiFi',
+        'firewall bypass': 'Network/Firewall-Bypass',
+        'firewall-bypass': 'Network/Firewall-Bypass',
+        'packet capture': 'Network/Packet-Capture',
+        'packet-capture': 'Network/Packet-Capture',
+        'mitm': 'Network/MITM',
+        'network pivoting': 'Network/Pivoting',
+        'network-pivoting': 'Network/Pivoting',
+        'active directory': 'Active-Directory/Core',
+        'active-directory': 'Active-Directory/Core',
+        'kerberos': 'Active-Directory/Kerberos',
+        'ntlm': 'Active-Directory/NTLM',
+        'ldap': 'Active-Directory/LDAP',
+        'ad cs': 'Active-Directory/AD-CS',
+        'ad-cs': 'Active-Directory/AD-CS',
+        'gpo abuse': 'Active-Directory/GPO-Abuse',
+        'gpo-abuse': 'Active-Directory/GPO-Abuse',
+        'delegation abuse': 'Active-Directory/Delegation-Abuse',
+        'delegation-abuse': 'Active-Directory/Delegation-Abuse',
+        'bloodhound': 'Active-Directory/BloodHound',
+        'domain escalation': 'Active-Directory/Domain-Escalation',
+        'domain-escalation': 'Active-Directory/Domain-Escalation',
         'bug bounty writeup': 'Bug-Bounty', 'bug-bounty': 'Bug-Bounty',
         'ctf': 'CTF', 'htb': 'CTF/HTB', 'cve': 'CVE',
     },
@@ -55,15 +147,36 @@ const DEFAULT_SETTINGS = {
 
 const ALL_TAGS = ['xss','sqli','rce','ssrf','idor','csrf','xxe','lfi','open-redirect','recon',
     'privesc','bypass','ato','api-security','auth','race-condition','ssti','deserialization',
-    'graphql','mobile','ctf','htb','bug-bounty','cve'];
+    'graphql','mobile','ctf','htb','bug-bounty','cve','path-traversal','file-upload',
+    'command-injection','prototype-pollution','request-smuggling','cache-poisoning',
+    'host-header-injection','jwt','oauth','cors','authorization-bypass',
+    'authentication-bypass','business-logic','subdomain-takeover','osint','exposed-secrets',
+    'hackerone','bugcrowd','intigriti','yeswehack','synack','zero-day',
+    'android','ios','webview','deep-link','intent-redirection','content-provider',
+    'network-security','dns','smb','vpn','wifi','firewall-bypass','packet-capture','mitm','network-pivoting',
+    'active-directory','kerberos','ntlm','ldap','ad-cs','gpo-abuse','delegation-abuse','bloodhound','domain-escalation'];
 
 const TAG_SEVERITY_CLASS = {
     'rce':'wm-tag-crit','sqli':'wm-tag-crit','deserialization':'wm-tag-crit','xxe':'wm-tag-crit',
+    'command-injection':'wm-tag-crit',
     'xss':'wm-tag-high','ssrf':'wm-tag-high','ssti':'wm-tag-high','auth':'wm-tag-high','ato':'wm-tag-high',
+    'prototype-pollution':'wm-tag-high','request-smuggling':'wm-tag-high','authorization-bypass':'wm-tag-high',
+    'authentication-bypass':'wm-tag-high','file-upload':'wm-tag-high',
     'idor':'wm-tag-med','csrf':'wm-tag-med','lfi':'wm-tag-med','open-redirect':'wm-tag-med',
+    'path-traversal':'wm-tag-med','cache-poisoning':'wm-tag-med','host-header-injection':'wm-tag-med',
     'race-condition':'wm-tag-med','bypass':'wm-tag-med','privesc':'wm-tag-med',
     'recon':'wm-tag-info','ctf':'wm-tag-info','htb':'wm-tag-info','bug-bounty':'wm-tag-info',
     'mobile':'wm-tag-info','graphql':'wm-tag-info','api-security':'wm-tag-info','cve':'wm-tag-info',
+    'jwt':'wm-tag-info','oauth':'wm-tag-info','cors':'wm-tag-info','business-logic':'wm-tag-info',
+    'subdomain-takeover':'wm-tag-info','osint':'wm-tag-info','exposed-secrets':'wm-tag-info',
+    'hackerone':'wm-tag-info','bugcrowd':'wm-tag-info','intigriti':'wm-tag-info',
+    'yeswehack':'wm-tag-info','synack':'wm-tag-info','zero-day':'wm-tag-info',
+    'android':'wm-tag-info','ios':'wm-tag-info','webview':'wm-tag-info','deep-link':'wm-tag-info',
+    'intent-redirection':'wm-tag-info','content-provider':'wm-tag-info',
+    'network-security':'wm-tag-info','dns':'wm-tag-info','smb':'wm-tag-info','vpn':'wm-tag-info',
+    'wifi':'wm-tag-info','firewall-bypass':'wm-tag-info','packet-capture':'wm-tag-info','mitm':'wm-tag-info','network-pivoting':'wm-tag-info',
+    'active-directory':'wm-tag-info','kerberos':'wm-tag-info','ntlm':'wm-tag-info','ldap':'wm-tag-info',
+    'ad-cs':'wm-tag-info','gpo-abuse':'wm-tag-info','delegation-abuse':'wm-tag-info','bloodhound':'wm-tag-info','domain-escalation':'wm-tag-info',
 };
 
 const SEVERITY_ICON = { critical:'🔴', high:'🟠', medium:'🟡', info:'🔵' };
@@ -108,6 +221,143 @@ function parseDateString(s) {
     try { return new Date(s).toISOString().slice(0,10); } catch { return new Date().toISOString().slice(0,10); }
 }
 
+function isBoilerplateTitle(title) {
+    const lower = String(title || '').toLowerCase().trim();
+    if (!lower) return true;
+    return NON_ARTICLE_TITLE_MARKERS.some(marker => lower.includes(marker));
+}
+
+function isDiscoveryBlockedUrl(url) {
+    try {
+        const parsed = new URL(url);
+        const host = parsed.hostname.toLowerCase();
+        const path = parsed.pathname.toLowerCase();
+        const full = `${host}${path}`;
+
+        if (!['http:', 'https:'].includes(parsed.protocol)) return true;
+        if (NON_ARTICLE_MEDIUM_HOSTS.includes(host)) return true;
+        if (NON_ARTICLE_URL_MARKERS.some(marker => path.includes(marker) || full.includes(marker))) return true;
+
+        const firstSegment = path.split('/').filter(Boolean)[0] || '';
+        if ((host === 'medium.com' || host.endsWith('.medium.com')) &&
+            ['search', 'tag', 'topic', 'topics', 'about', 'm', 'me', 'policy', 'help'].includes(firstSegment)) {
+            return true;
+        }
+
+        const lastSegment = path.split('/').filter(Boolean).pop() || '';
+        if (/^(privacy-policy|cookie-policy|terms(?:-of-(?:service|use))?|legal(?:-notice)?|community-guidelines|house-rules|sitemap|contact-us|help(?:-center)?|support(?:-center)?)$/i.test(lastSegment)) {
+            return true;
+        }
+
+        return false;
+    } catch(e) {
+        return true;
+    }
+}
+
+function topicMatchesTitle(title, topic) {
+    const text = String(title || '').toLowerCase();
+    const key = slugify(topic || '');
+    if (!key) return true;
+
+    const topicMatchers = {
+        idor: /\bidor\b|insecure direct object|broken access control|object level authorization|authorization bypass/i,
+        xss: /\bxss\b|cross[- ]site scripting/i,
+        ssrf: /\bssrf\b|server[- ]side request forgery/i,
+        sqli: /\bsqli\b|sql injection/i,
+        rce: /\brce\b|remote code execution|command injection|code execution/i,
+        'command-injection': /command injection|os command injection|rce|remote code execution/i,
+        csrf: /\bcsrf\b|cross[- ]site request forgery/i,
+        xxe: /\bxxe\b|xml external entity/i,
+        lfi: /\blfi\b|local file inclusion|path traversal/i,
+        'path-traversal': /path traversal|directory traversal|lfi|local file inclusion/i,
+        ssti: /\bssti\b|server[- ]side template injection|template injection/i,
+        deserialization: /\bdeserialization\b|deserialize|insecure deserialization/i,
+        'open-redirect': /open redirect|unvalidated redirect/i,
+        'file-upload': /file upload|arbitrary upload|unrestricted upload/i,
+        auth: /\bauth\b|authentication|authorization|access control/i,
+        jwt: /\bjwt\b|json web token/i,
+        oauth: /\boauth\b/i,
+        cors: /\bcors\b|cross-origin resource sharing/i,
+        graphql: /\bgraphql\b/i,
+        'api-security': /\bapi\b|api security|authorization|broken object level/i,
+        'prototype-pollution': /prototype pollution/i,
+        'request-smuggling': /request smuggling|http request smuggling|h2c smuggling/i,
+        'cache-poisoning': /cache poisoning|cache deception|web cache/i,
+        'host-header-injection': /host header|x-forwarded-host|host injection/i,
+        'authorization-bypass': /authorization bypass|broken access control|forbidden bypass/i,
+        'authentication-bypass': /authentication bypass|auth bypass|login bypass/i,
+        'broken-access-control': /broken access control|access control/i,
+        'privilege-escalation': /privilege escalation|privesc|elevation of privilege/i,
+        ato: /\bato\b|account takeover/i,
+        'account-takeover': /account takeover|ato/i,
+        'race-condition': /race condition|concurrency/i,
+        'business-logic': /business logic|logic flaw|workflow bypass/i,
+        recon: /\brecon\b|enumeration|attack surface/i,
+        osint: /\bosint\b|open source intelligence/i,
+        'subdomain-takeover': /subdomain takeover|dangling dns/i,
+        'exposed-secrets': /exposed secret|secret leak|token leak|credential leak/i,
+        hackerone: /\bhackerone\b/i,
+        bugcrowd: /\bbugcrowd\b/i,
+        intigriti: /\bintigriti\b/i,
+        yeswehack: /\byeswehack\b/i,
+        synack: /\bsynack\b/i,
+        'zero-day': /zero-day|0-day/i,
+        android: /\bandroid\b|apk|adb/i,
+        ios: /\bios\b|iphone|ipad|ipa /i,
+        mobile: /\bmobile\b|mobile app|apk|ipa|android|ios/i,
+        webview: /webview/i,
+        'deep-link': /deep link|deeplink|universal link|app link/i,
+        'intent-redirection': /intent redirection|intent hijacking|android intent/i,
+        'content-provider': /content provider/i,
+        'network-security': /network security|network pentest|lateral movement/i,
+        dns: /\bdns\b|zone transfer|dns rebinding/i,
+        smb: /\bsmb\b|samba|445\/tcp/i,
+        vpn: /\bvpn\b|openvpn|wireguard|ipsec/i,
+        wifi: /\bwifi\b|wireless|802\.11|evil twin/i,
+        'firewall-bypass': /firewall bypass|egress filtering|acl bypass/i,
+        'packet-capture': /packet capture|pcap|wireshark|tcpdump/i,
+        mitm: /\bmitm\b|man[- ]in[- ]the[- ]middle/i,
+        'network-pivoting': /pivoting|pivot|socks proxy|tunnel/i,
+        'active-directory': /active directory|windows domain|domain controller/i,
+        kerberos: /\bkerberos\b|as-rep roasting|kerberoasting|silver ticket|golden ticket/i,
+        ntlm: /\bntlm\b|pass[- ]the[- ]hash|ntlm relay/i,
+        ldap: /\bldap\b/i,
+        'ad-cs': /ad cs|active directory certificate services|esc[0-9]/i,
+        'gpo-abuse': /gpo abuse|group policy/i,
+        'delegation-abuse': /delegation abuse|resource-based constrained delegation|rbcd|constrained delegation/i,
+        bloodhound: /\bbloodhound\b/i,
+        'domain-escalation': /domain escalation|domain admin|dcsync|secretsdump/i,
+        'bug-bounty-writeup': /bug bounty|writeup|report|hackerone|bugcrowd|intigriti/i,
+    };
+
+    if (key.startsWith('cve-')) return /cve-\d{4}-\d{4,}/i.test(text);
+    const matcher = topicMatchers[key];
+    if (matcher) return matcher.test(text);
+
+    const tokens = key.split('-').filter(token => token.length > 2);
+    return tokens.some(token => text.includes(token));
+}
+
+function isLikelySecurityWriteupTitle(title) {
+    const lower = String(title || '').toLowerCase().trim();
+    if (!lower || isBoilerplateTitle(lower)) return false;
+    if (/cve-\d{4}-\d{4,}/i.test(lower)) return true;
+
+    const titleTags = extractTags(title, []).filter(tag => !['writeup', 'security'].includes(tag));
+    if (titleTags.length > 0) return true;
+
+    return /(bug bounty|writeup|vulnerability|exploit|bypass|poc|proof of concept|auth|authorization|injection|takeover|rce|xss|idor|ssrf|sqli|xxe|csrf|lfi|ssti|deserialization|path traversal|graphql|api security|jwt|oauth|cors|prototype pollution|request smuggling|cache poisoning|host header|file upload|subdomain takeover|osint|zero-day|android|ios|mobile app|webview|deep link|intent|content provider|network security|dns|smb|vpn|wifi|mitm|packet capture|active directory|kerberos|ntlm|ldap|ad cs|bloodhound|domain admin|dcsync)/i.test(lower);
+}
+
+function shouldKeepTopicResult(url, title, topic) {
+    if (isDiscoveryBlockedUrl(url)) return false;
+    if (isBoilerplateTitle(title)) return false;
+    if (!isLikelySecurityWriteupTitle(title)) return false;
+    if (!topicMatchesTitle(title, topic)) return false;
+    return true;
+}
+
 function uniqueValues(items) {
     return [...new Set((items || []).filter(Boolean))];
 }
@@ -128,14 +378,47 @@ function extractTags(title, categories=[]) {
         [['rce','remote code execution','command injection'],'rce'],
         [['ssrf'],'ssrf'],[['idor','insecure direct'],'idor'],[['csrf'],'csrf'],
         [['xxe'],'xxe'],[['lfi','local file'],'lfi'],[['open redirect'],'open-redirect'],
-        [['recon','subdomain takeover','enumeration'],'recon'],
+        [['path traversal'],'path-traversal'],[['prototype pollution'],'prototype-pollution'],
+        [['request smuggling','http request smuggling'],'request-smuggling'],
+        [['cache poisoning','cache deception'],'cache-poisoning'],
+        [['host header','x-forwarded-host'],'host-header-injection'],
+        [['file upload','arbitrary upload','unrestricted upload'],'file-upload'],
+        [['recon','subdomain takeover','enumeration','osint'],'recon'],
         [['privilege escalation','privesc'],'privesc'],[['bypass','waf bypass'],'bypass'],
         [['account takeover','ato'],'ato'],[['api security','api hacking'],'api-security'],
         [['oauth','jwt','token hijack'],'auth'],[['race condition'],'race-condition'],
         [['ssti','template injection'],'ssti'],[['deserialization'],'deserialization'],
         [['graphql'],'graphql'],[['android','ios','mobile app'],'mobile'],
+        [['android','apk','adb'],'android'],[['ios','iphone','ipad'],'ios'],
+        [['webview'],'webview'],[['deep link','deeplink','universal link','app link'],'deep-link'],
+        [['intent redirection','intent hijacking','android intent'],'intent-redirection'],
+        [['content provider'],'content-provider'],
+        [['network security','network pentest'],'network-security'],
+        [['dns','zone transfer','dns rebinding'],'dns'],
+        [['smb','samba'],'smb'],[['vpn','openvpn','wireguard','ipsec'],'vpn'],
+        [['wifi','wireless','evil twin'],'wifi'],
+        [['firewall bypass','acl bypass'],'firewall-bypass'],
+        [['packet capture','pcap','wireshark','tcpdump'],'packet-capture'],
+        [['mitm','man in the middle'],'mitm'],
+        [['pivoting','pivot','tunnel'],'network-pivoting'],
+        [['active directory','domain controller','windows domain'],'active-directory'],
+        [['kerberos','kerberoasting','as-rep roasting','golden ticket','silver ticket'],'kerberos'],
+        [['ntlm','ntlm relay','pass the hash'],'ntlm'],
+        [['ldap'],'ldap'],
+        [['ad cs','active directory certificate services','esc1','esc8'],'ad-cs'],
+        [['gpo abuse','group policy'],'gpo-abuse'],
+        [['delegation abuse','rbcd','constrained delegation'],'delegation-abuse'],
+        [['bloodhound'],'bloodhound'],
+        [['domain escalation','dcsync','domain admin'],'domain-escalation'],
         [['ctf','capture the flag'],'ctf'],[['hack the box','htb'],'htb'],
         [['bug bounty','hackerone','bugcrowd','intigriti'],'bug-bounty'],[['cve-'],'cve'],
+        [['authorization bypass','broken access control'],'authorization-bypass'],
+        [['authentication bypass'],'authentication-bypass'],
+        [['business logic','logic flaw'],'business-logic'],
+        [['jwt','json web token'],'jwt'],[['oauth'],'oauth'],[['cors'],'cors'],
+        [['zero-day','0-day'],'zero-day'],
+        [['hackerone'],'hackerone'],[['bugcrowd'],'bugcrowd'],[['intigriti'],'intigriti'],
+        [['yeswehack'],'yeswehack'],[['synack'],'synack'],
     ];
     const tags = ['writeup','security'];
     for (const [kws,tag] of map)
@@ -158,11 +441,13 @@ function estimateReadingTime(text) {
 function detectSeverity(title, tags) {
     const t = title.toLowerCase();
     const crit = ['rce','remote code execution','command injection','deserialization','zero-day','0-day','pre-auth rce'];
-    const high = ['sqli','sql injection','xxe','ssrf','ssti','template injection','account takeover','ato','auth bypass','authentication bypass'];
-    const med  = ['xss','cross-site scripting','csrf','idor','lfi','local file','open redirect','race condition','privilege escalation','privesc','bypass'];
-    if (crit.some(k=>t.includes(k))||['rce','deserialization'].some(x=>tags.includes(x))) return 'critical';
-    if (high.some(k=>t.includes(k))||['sqli','xxe','ssrf','ssti','ato'].some(x=>tags.includes(x))) return 'high';
-    if (med.some(k=>t.includes(k))||['xss','csrf','idor','lfi'].some(x=>tags.includes(x))) return 'medium';
+    const high = ['sqli','sql injection','xxe','ssrf','ssti','template injection','account takeover','ato','auth bypass','authentication bypass',
+        'prototype pollution','request smuggling','authorization bypass','broken access control','file upload'];
+    const med  = ['xss','cross-site scripting','csrf','idor','lfi','local file','open redirect','race condition','privilege escalation','privesc','bypass',
+        'path traversal','cache poisoning','host header'];
+    if (crit.some(k=>t.includes(k))||['rce','deserialization','command-injection'].some(x=>tags.includes(x))) return 'critical';
+    if (high.some(k=>t.includes(k))||['sqli','xxe','ssrf','ssti','ato','prototype-pollution','request-smuggling','authorization-bypass','authentication-bypass','file-upload'].some(x=>tags.includes(x))) return 'high';
+    if (med.some(k=>t.includes(k))||['xss','csrf','idor','lfi','path-traversal','cache-poisoning','host-header-injection'].some(x=>tags.includes(x))) return 'medium';
     return 'info';
 }
 
@@ -380,6 +665,43 @@ const ERROR_PAGE_MARKERS = [
     'temporarily unavailable',
 ];
 
+const NON_ARTICLE_TITLE_MARKERS = [
+    'privacy policy',
+    'cookie policy',
+    'terms of service',
+    'terms of use',
+    'help center',
+    'support center',
+    'contact us',
+    'about medium',
+    'community guidelines',
+    'house rules',
+    'legal notice',
+    'safety policies',
+    'sitemap',
+];
+
+const NON_ARTICLE_URL_MARKERS = [
+    '/search',
+    '/tag/',
+    '/topic/',
+    '/topics/',
+    '/archive',
+    '/followers',
+    '/following',
+    '/membership',
+    '/plans',
+    '/privacy-policy',
+    '/cookie-policy',
+    '/m/signin',
+    '/m/login',
+];
+
+const NON_ARTICLE_MEDIUM_HOSTS = [
+    'policy.medium.com',
+    'help.medium.com',
+];
+
 const MEDIUM_VALIDATION_RULES = {
     minHtmlLength: 200,
     minArticleTextLength: 500,
@@ -456,7 +778,7 @@ class MediumFallbackService {
         return doc.body || null;
     }
 
-    validateContent(html, articleSelector) {
+    validateContent(html, articleSelector, sourceUrl='') {
         const doc = new DOMParser().parseFromString(html, 'text/html');
         const title = this.extractTitle(doc);
         const article = this.selectArticleNode(doc, articleSelector);
@@ -474,6 +796,8 @@ class MediumFallbackService {
         if (structuredBlocks < MEDIUM_VALIDATION_RULES.minStructuredBlocks && paragraphCount + headingCount === 0) {
             reasons.push('insufficient-structure');
         }
+        if (isBoilerplateTitle(title)) reasons.push('boilerplate-title');
+        if (sourceUrl && isDiscoveryBlockedUrl(sourceUrl)) reasons.push('non-article-url');
         if (ERROR_PAGE_MARKERS.some(marker => lowerSignals.includes(marker))) reasons.push('error-page');
         if (this.isPremiumBlocked(html)) reasons.push('premium-or-blocked');
 
@@ -522,7 +846,7 @@ class MediumFallbackService {
                 return { ok: false, reasons: [`http-${status}`], fetchedFrom: url };
             }
 
-            const validation = this.validateContent(resp.text, articleSelector);
+            const validation = this.validateContent(resp.text, articleSelector, url);
             if (!validation.valid) {
                 this.logValidationFailure(sourceLabel, url, validation);
                 return {
@@ -795,7 +1119,8 @@ function extractLinksFromSearchPage(html, baseHostname) {
                 try {
                     const fullUrl = href.startsWith('http') ? href : `https://${baseHostname}${href}`;
                     // Filter out non-article pages
-                    if (!fullUrl.includes('/search?') && !fullUrl.includes('/tag/') &&
+                    if (!isDiscoveryBlockedUrl(fullUrl) &&
+                        !fullUrl.includes('/search?') && !fullUrl.includes('/tag/') &&
                         !fullUrl.includes('/about') && !fullUrl.includes('/archive') &&
                         !fullUrl.endsWith('/followers') && !fullUrl.endsWith('/following')) {
                         links.add(fullUrl.split('?')[0]); // Remove query params for dedup
@@ -824,6 +1149,7 @@ function extractLinksFromSearchPage(html, baseHostname) {
                 href.includes('twitter.com') || href.includes('facebook.com') ||
                 href.includes('/tag/') || href.includes('/search'))  continue;
             try {
+                if (isDiscoveryBlockedUrl(href)) continue;
                 const path = new URL(href).pathname;
                 if (path.split('/').filter(Boolean).length >= 2) {
                     links.add(href.split('?')[0]);
@@ -862,6 +1188,7 @@ async function fetchTopicResults(topicSourceInput, seenUrls, folderMap, outputFo
 
             for (const link of articleLinks) {
                 if (seenUrls.has(link) || results.some(item => item.url === link)) continue;
+                if (isDiscoveryBlockedUrl(link)) continue;
 
                 let title = '';
                 const safeLink = link.replace(/"/g, '\\"');
@@ -874,6 +1201,7 @@ async function fetchTopicResults(topicSourceInput, seenUrls, folderMap, outputFo
                     title = slug.replace(/-[a-f0-9]{8,}$/, '').replace(/[-_]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
                 }
                 if (!title || title.length < 3) continue;
+                if (!shouldKeepTopicResult(link, title, topic)) continue;
 
                 const tags = uniqueValues([...extractTags(title, [topic]), slugify(topicSource.name), slugify(topic)]);
                 const folder = getTopicFolder(topic, folderMap, outputFolder, topicSource.category);
