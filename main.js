@@ -1993,6 +1993,7 @@ class FetchPreviewModal extends obsidian.Modal {
         contentEl.empty();
         const hdr = contentEl.createDiv({cls:'wm-modal-header'});
         hdr.createEl('h2', {text: '⬇  Collect Writeups'});
+        hdr.createEl('p', {text: 'Scan feeds and topic sources, validate the results, then save only the writeups you want offline.', cls: 'wm-modal-subtitle'});
 
         const filters = contentEl.createDiv({cls: 'wm-filters'});
         const tagWrap = filters.createDiv({cls: 'wm-filter-field'});
@@ -2178,6 +2179,7 @@ class FetchPreviewModal extends obsidian.Modal {
         const total = this.items.length;
         const hdr = contentEl.createDiv({cls:'wm-modal-header'});
         hdr.createEl('h2', {text: `📋 ${total} new writeup${total!==1?'s':''} found`});
+        hdr.createEl('p', {text: 'Search, sort, and review each finding before it is converted into a markdown note.', cls: 'wm-modal-subtitle'});
 
         // Search + Sort bar
         const toolbar = contentEl.createDiv({cls: 'wm-toolbar'});
@@ -2410,6 +2412,7 @@ class SourcesModal extends obsidian.Modal {
         contentEl.empty();
         const hdr = contentEl.createDiv({cls:'wm-modal-header'});
         hdr.createEl('h2', {text: '🔐 Security Writeup Collector'});
+        hdr.createEl('p', {text: 'Tune sources, topic discovery, CVE tracking, alerts, and output behavior from one place.', cls: 'wm-modal-subtitle'});
 
         const bar = contentEl.createDiv({cls: 'wm-bar'});
         const folderF = bar.createDiv({cls: 'wm-bar-field'});
@@ -2875,6 +2878,7 @@ class StatsModal extends obsidian.Modal {
         contentEl.empty();
         const hdr = contentEl.createDiv({cls:'wm-modal-header'});
         hdr.createEl('h2', {text: '📊 Statistics Dashboard'});
+        hdr.createEl('p', {text: 'Review collector activity, source health, and trending tags across your saved writeups.', cls: 'wm-modal-subtitle'});
 
         // Overview cards
         const overview = contentEl.createDiv({cls:'wm-stats-overview'});
