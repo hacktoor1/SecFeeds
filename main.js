@@ -5,6 +5,7 @@ var obsidian = require('obsidian');
 
 const DEFAULT_SETTINGS = {
     outputFolder: 'writeups',
+    topicOutputFolder: 'writeups-by-topic',
     limitPerSource: 20,
     autoFetchOnStartup: false,
     fetchFullContent: true,
@@ -54,21 +55,21 @@ const DEFAULT_SETTINGS = {
           articleSelector:'article, .entry-content, main' },
     ],
     topicSources: [
-        { id:'medium-idor',  name:'Medium', type:'search_source', baseUrl:'https://medium.com/search?q=', topic:'idor', topics:['idor'], category:'Web/IDOR',  syncFrequency:'daily', autoSync:true, enabled:true },
-        { id:'medium-xss',   name:'Medium', type:'search_source', baseUrl:'https://medium.com/search?q=', topic:'xss', topics:['xss'], category:'Web/XSS', syncFrequency:'daily', autoSync:true, enabled:true },
-        { id:'medium-ssrf',  name:'Medium', type:'search_source', baseUrl:'https://medium.com/search?q=', topic:'ssrf', topics:['ssrf'], category:'Web/SSRF', syncFrequency:'daily', autoSync:true, enabled:true },
-        { id:'medium-sqli',  name:'Medium', type:'search_source', baseUrl:'https://medium.com/search?q=', topic:'sqli', topics:['sqli'], category:'Web/SQLi', syncFrequency:'daily', autoSync:true, enabled:true },
-        { id:'medium-rce',   name:'Medium', type:'search_source', baseUrl:'https://medium.com/search?q=', topic:'rce', topics:['rce'], category:'Web/RCE', syncFrequency:'daily', autoSync:true, enabled:true },
-        { id:'medium-bug-bounty', name:'Medium', type:'search_source', baseUrl:'https://medium.com/search?q=', topic:'bug bounty writeup', topics:['bug bounty writeup'], category:'Bug-Bounty', syncFrequency:'weekly', autoSync:true, enabled:true },
-        { id:'medium-web-extra', name:'Medium', type:'search_source', baseUrl:'https://medium.com/search?q=', topic:'csrf', topics:['csrf','xxe','lfi','path traversal','ssti','deserialization','open redirect','file upload','command injection'], category:'Web/{topic}', syncFrequency:'daily', autoSync:true, enabled:true },
-        { id:'medium-web-edge', name:'Medium', type:'search_source', baseUrl:'https://medium.com/search?q=', topic:'graphql', topics:['graphql','api security','jwt','oauth','cors','prototype pollution','request smuggling','cache poisoning','host header injection'], category:'Web/{topic}', syncFrequency:'daily', autoSync:true, enabled:true },
-        { id:'medium-access-control', name:'Medium', type:'search_source', baseUrl:'https://medium.com/search?q=', topic:'authorization bypass', topics:['authorization bypass','authentication bypass','broken access control','privilege escalation','account takeover','race condition','business logic'], category:'Access-Control/{topic}', syncFrequency:'daily', autoSync:true, enabled:true },
-        { id:'medium-recon', name:'Medium', type:'search_source', baseUrl:'https://medium.com/search?q=', topic:'subdomain takeover', topics:['subdomain takeover','recon','osint','exposed secrets'], category:'Recon/{topic}', syncFrequency:'weekly', autoSync:true, enabled:true },
-        { id:'medium-cve-trends', name:'Medium', type:'search_source', baseUrl:'https://medium.com/search?q=', topic:'cve-2026', topics:['cve-2026','cve-2025','zero-day'], category:'CVE/{topic}', syncFrequency:'daily', autoSync:true, enabled:true },
-        { id:'medium-platform-writeups', name:'Medium', type:'search_source', baseUrl:'https://medium.com/search?q=', topic:'hackerone', topics:['hackerone','bugcrowd','intigriti','yeswehack','synack'], category:'Bug-Bounty/{topic}', syncFrequency:'weekly', autoSync:true, enabled:true },
-        { id:'medium-mobile', name:'Medium', type:'search_source', baseUrl:'https://medium.com/search?q=', topic:'android', topics:['android','ios','mobile app','webview','deep link','intent redirection','content provider','mobile pentest','apk reverse engineering'], category:'Mobile/{topic}', syncFrequency:'weekly', autoSync:true, enabled:true },
-        { id:'medium-network', name:'Medium', type:'search_source', baseUrl:'https://medium.com/search?q=', topic:'network security', topics:['network security','dns','smb','vpn','wifi','firewall bypass','packet capture','mitm','network pivoting'], category:'Network/{topic}', syncFrequency:'weekly', autoSync:true, enabled:true },
-        { id:'medium-active-directory', name:'Medium', type:'search_source', baseUrl:'https://medium.com/search?q=', topic:'active directory', topics:['active directory','kerberos','ntlm','ldap','ad cs','gpo abuse','delegation abuse','bloodhound','domain escalation'], category:'Active-Directory/{topic}', syncFrequency:'weekly', autoSync:true, enabled:true },
+        { id:'ddg-idor',  name:'DuckDuckGo', type:'search_source', baseUrl:'https://html.duckduckgo.com/html/?q=security+writeup+', topic:'idor', topics:['idor'], category:'Web/IDOR',  syncFrequency:'daily', autoSync:true, enabled:true },
+        { id:'ddg-xss',   name:'DuckDuckGo', type:'search_source', baseUrl:'https://html.duckduckgo.com/html/?q=security+writeup+', topic:'xss', topics:['xss'], category:'Web/XSS', syncFrequency:'daily', autoSync:true, enabled:true },
+        { id:'ddg-ssrf',  name:'DuckDuckGo', type:'search_source', baseUrl:'https://html.duckduckgo.com/html/?q=security+writeup+', topic:'ssrf', topics:['ssrf'], category:'Web/SSRF', syncFrequency:'daily', autoSync:true, enabled:true },
+        { id:'ddg-sqli',  name:'DuckDuckGo', type:'search_source', baseUrl:'https://html.duckduckgo.com/html/?q=security+writeup+', topic:'sqli', topics:['sqli'], category:'Web/SQLi', syncFrequency:'daily', autoSync:true, enabled:true },
+        { id:'ddg-rce',   name:'DuckDuckGo', type:'search_source', baseUrl:'https://html.duckduckgo.com/html/?q=security+writeup+', topic:'rce', topics:['rce'], category:'Web/RCE', syncFrequency:'daily', autoSync:true, enabled:true },
+        { id:'ddg-bug-bounty', name:'DuckDuckGo', type:'search_source', baseUrl:'https://html.duckduckgo.com/html/?q=security+writeup+', topic:'bug bounty writeup', topics:['bug bounty writeup'], category:'Bug-Bounty', syncFrequency:'weekly', autoSync:true, enabled:true },
+        { id:'ddg-web-extra', name:'DuckDuckGo', type:'search_source', baseUrl:'https://html.duckduckgo.com/html/?q=security+writeup+', topic:'csrf', topics:['csrf','xxe','lfi','path traversal','ssti','deserialization','open redirect','file upload','command injection'], category:'Web/{topic}', syncFrequency:'daily', autoSync:true, enabled:true },
+        { id:'ddg-web-edge', name:'DuckDuckGo', type:'search_source', baseUrl:'https://html.duckduckgo.com/html/?q=security+writeup+', topic:'graphql', topics:['graphql','api security','jwt','oauth','cors','prototype pollution','request smuggling','cache poisoning','host header injection'], category:'Web/{topic}', syncFrequency:'daily', autoSync:true, enabled:true },
+        { id:'ddg-access-control', name:'DuckDuckGo', type:'search_source', baseUrl:'https://html.duckduckgo.com/html/?q=security+writeup+', topic:'authorization bypass', topics:['authorization bypass','authentication bypass','broken access control','privilege escalation','account takeover','race condition','business logic'], category:'Access-Control/{topic}', syncFrequency:'daily', autoSync:true, enabled:true },
+        { id:'ddg-recon', name:'DuckDuckGo', type:'search_source', baseUrl:'https://html.duckduckgo.com/html/?q=security+writeup+', topic:'subdomain takeover', topics:['subdomain takeover','recon','osint','exposed secrets'], category:'Recon/{topic}', syncFrequency:'weekly', autoSync:true, enabled:true },
+        { id:'ddg-cve-trends', name:'DuckDuckGo', type:'search_source', baseUrl:'https://html.duckduckgo.com/html/?q=security+writeup+', topic:'cve-2026', topics:['cve-2026','cve-2025','zero-day'], category:'CVE/{topic}', syncFrequency:'daily', autoSync:true, enabled:true },
+        { id:'ddg-platform-writeups', name:'DuckDuckGo', type:'search_source', baseUrl:'https://html.duckduckgo.com/html/?q=security+writeup+', topic:'hackerone', topics:['hackerone','bugcrowd','intigriti','yeswehack','synack'], category:'Bug-Bounty/{topic}', syncFrequency:'weekly', autoSync:true, enabled:true },
+        { id:'ddg-mobile', name:'DuckDuckGo', type:'search_source', baseUrl:'https://html.duckduckgo.com/html/?q=security+writeup+', topic:'android', topics:['android','ios','mobile app','webview','deep link','intent redirection','content provider','mobile pentest','apk reverse engineering'], category:'Mobile/{topic}', syncFrequency:'weekly', autoSync:true, enabled:true },
+        { id:'ddg-network', name:'DuckDuckGo', type:'search_source', baseUrl:'https://html.duckduckgo.com/html/?q=security+writeup+', topic:'network security', topics:['network security','dns','smb','vpn','wifi','firewall bypass','packet capture','mitm','network pivoting'], category:'Network/{topic}', syncFrequency:'weekly', autoSync:true, enabled:true },
+        { id:'ddg-active-directory', name:'DuckDuckGo', type:'search_source', baseUrl:'https://html.duckduckgo.com/html/?q=security+writeup+', topic:'active directory', topics:['active directory','kerberos','ntlm','ldap','ad cs','gpo abuse','delegation abuse','bloodhound','domain escalation'], category:'Active-Directory/{topic}', syncFrequency:'weekly', autoSync:true, enabled:true },
     ],
     topicFolderMap: {
         'idor': 'Web/IDOR', 'xss': 'Web/XSS', 'ssrf': 'Web/SSRF',
@@ -1255,7 +1256,7 @@ function applyDynamicBuiltInTopicSources(settings) {
     if (!settings) return;
     settings.cveTopicKeywords = normalizeCveKeywordList(settings.cveTopicKeywords || DEFAULT_SETTINGS.cveTopicKeywords);
 
-    const cveSource = (settings.topicSources || []).find(src => src.id === 'medium-cve-trends');
+    const cveSource = (settings.topicSources || []).find(src => src.id === 'ddg-cve-trends');
     if (cveSource) {
         cveSource.topics = [...settings.cveTopicKeywords];
         cveSource.topic = cveSource.topics[0] || 'cve';
@@ -1283,8 +1284,14 @@ function formatTopicFolderSegment(topic) {
 function getTopicFolder(topic, folderMap, outputFolder, categoryOverride) {
     const rawCategory = String(categoryOverride || '').trim();
     if (rawCategory) {
-        const category = rawCategory.replace(/\{topic\}/gi, formatTopicFolderSegment(topic)).replace(/^\/+|\/+$/g, '');
-        if (category.toLowerCase().startsWith(`${outputFolder.toLowerCase()}/`)) return category;
+        let category = rawCategory.replace(/\{topic\}/gi, formatTopicFolderSegment(topic)).replace(/^\/+|\/+$/g, '');
+        for (const root of uniqueValues([outputFolder, DEFAULT_SETTINGS.outputFolder, DEFAULT_SETTINGS.topicOutputFolder].filter(Boolean))) {
+            const rootPrefix = `${String(root).toLowerCase()}/`;
+            if (category.toLowerCase().startsWith(rootPrefix)) {
+                category = category.slice(root.length + 1);
+                break;
+            }
+        }
         return `${outputFolder}/${category}`;
     }
     const key = topic.toLowerCase().trim();
@@ -1322,6 +1329,21 @@ function extractLinksFromSearchPage(html, baseHostname) {
     const doc = new DOMParser().parseFromString(html, 'text/html');
     const links = new Set();
 
+    // DuckDuckGo-specific: article links from search results (HTML version)
+    if (baseHostname.includes('duckduckgo.com')) {
+        for (const a of doc.querySelectorAll('a[href*="uddg="]')) {
+            const href = sanitizeHref(a.getAttribute('href') || '');
+            const match = href.match(/uddg=([^&]+)/);
+            if (match) {
+                try {
+                    const decodedUrl = decodeURIComponent(match[1]);
+                    if (decodedUrl.startsWith('http') && !isDiscoveryBlockedUrl(decodedUrl)) {
+                        links.add(decodedUrl.split('?')[0]);
+                    }
+                } catch(e) {}
+            }
+        }
+    }
     // Medium-specific: article links from search results
     if (baseHostname.includes('medium.com') || MEDIUM_HOSTS.some(h => baseHostname.includes(h))) {
         // Medium search results have links to articles with long path slugs
@@ -1770,6 +1792,28 @@ const VULN_PROFILES = {
         arPayload: 'الفكرة عادة مش payload معقد بقدر ما هي إعادة نفس الطلب بسرعة أو بتوازي عالي.',
         arLearning: 'الـ locking والـ transactions والـ idempotency مهمين جدًا في الـ security-sensitive flows.',
     },
+    research: {
+        label: 'Security Research / Methodology',
+        cwe: 'CWE-693',
+        owasp: 'Security Misconfiguration',
+        objective: 'Use the article methodology to validate whether a target workflow exposes an exploitable security behavior.',
+        steps: [
+            'Map the protocol, endpoint, or feature discussed in the article before assuming a bug exists.',
+            'Replay the relevant flow while changing one controlled input at a time.',
+            'Observe how the server handles state, headers, tokens, or protocol-specific messages.',
+            'Record the exact condition that changes the response or breaks the trust boundary.',
+            'Turn the observation into a reusable detection test or a safe proof of concept.',
+        ],
+        payloadLang: 'http',
+        payload: 'GET /target-endpoint HTTP/1.1\nHost: target.example',
+        vulnerable: 'The documented workflow exposes a security-relevant behavior that can be reproduced on the target.',
+        secure: 'The target enforces protocol handling, validation, and authorization in a way that blocks the documented technique.',
+        attackFlow: 'Understand the protocol or feature -> replay and mutate the relevant input -> observe trust-boundary failure -> validate exploitability.',
+        arType: 'أسلوب بحث أو methodology أمنية',
+        arExploit: 'المقال هنا مش لازم يكون bug report مباشر، لكنه بيشرح طريقة عملية تفهمك فين السلوك الأمني الحساس وإزاي تختبره.',
+        arPayload: 'الجزء العملي غالبًا بيعتمد على تعديل requests أو الرسائل أو الـ headers بشكل تدريجي لحد ما يظهر السلوك المهم.',
+        arLearning: 'الفايدة الأساسية هنا إنك تفهم البروتوكول والـ flow الأول، وبعدها تبني test واضح بدل ما تعتمد على guesswork.',
+    },
     generic: {
         label: 'Security Misconfiguration / Logic Issue',
         cwe: 'CWE-284',
@@ -1794,13 +1838,94 @@ const VULN_PROFILES = {
     },
 };
 
+const SUMMARY_FOCUS_RULES = [
+    { re: /\bwebsocket\b/i, label: 'مسار الـ WebSocket' },
+    { re: /turbo intruder/i, label: 'استخدام Turbo Intruder' },
+    { re: /\bburp\b/i, label: 'استخدام Burp كجزء من الاختبار' },
+    { re: /graphql/i, label: 'واجهة GraphQL' },
+    { re: /api security|\bapi\b/i, label: 'واجهات الـ API' },
+    { re: /\bjwt\b|json web token/i, label: 'الـ JWT أو الـ token handling' },
+    { re: /\boauth\b/i, label: 'فلو OAuth' },
+    { re: /host header|authority/i, label: 'قيمة الـ Host أو authority' },
+    { re: /cookie chaos|\bcookie\b|session/i, label: 'الـ cookies والـ session handling' },
+    { re: /\bheader\b/i, label: 'الـ headers' },
+    { re: /request smuggling/i, label: 'سلوك request smuggling' },
+    { re: /cache poisoning/i, label: 'سلوك cache poisoning' },
+    { re: /\bssrf\b|metadata/i, label: 'الوصول الداخلي أو SSRF' },
+    { re: /\bxss\b/i, label: 'مسار XSS' },
+    { re: /\bsqli\b|sql injection/i, label: 'مسار SQL Injection' },
+    { re: /\bidor\b|broken access control/i, label: 'مسار authorization على مستوى الـ object' },
+    { re: /android|apk|adb/i, label: 'بيئة Android أو APK' },
+    { re: /\bios\b|iphone|ipad|ipa\b/i, label: 'بيئة iOS' },
+    { re: /webview/i, label: 'الـ WebView' },
+    { re: /deep link/i, label: 'الـ Deep Links' },
+    { re: /intent redirection|intent hijacking|android intent/i, label: 'الـ intents أو التنقل بين التطبيقات' },
+    { re: /content provider/i, label: 'الـ Content Providers' },
+    { re: /active directory|\bad\b/i, label: 'بيئة Active Directory' },
+    { re: /kerberos/i, label: 'Kerberos' },
+    { re: /\bntlm\b/i, label: 'NTLM' },
+    { re: /\bldap\b/i, label: 'LDAP' },
+    { re: /ad cs|certificate services|esc[0-9]/i, label: 'AD CS أو certificate abuse' },
+    { re: /\bdns\b/i, label: 'خدمات DNS' },
+    { re: /\bsmb\b|samba/i, label: 'خدمات SMB' },
+    { re: /\bvpn\b|openvpn|wireguard|ipsec/i, label: 'بيئة VPN' },
+    { re: /\bmitm\b|man in the middle/i, label: 'سيناريو MITM' },
+    { re: /bloodhound/i, label: 'تحليل العلاقات بـ BloodHound' },
+];
+
+const SUMMARY_METHOD_RULES = [
+    { re: /intercept|replay|repeat|send again/i, label: 'اعتراض الـ request وإعادة تشغيله بعد التعديل' },
+    { re: /tamper|modify|swap|change/i, label: 'تغيير قيمة حساسة في الطلب أو الرسالة' },
+    { re: /parallel|concurrent|race|turbo intruder/i, label: 'إرسال requests متوازية أو سريعة لالتقاط السلوك' },
+    { re: /\bheader\b|host header|authority/i, label: 'العبث في الـ headers أو قيم التوجيه' },
+    { re: /\bcookie\b|session|token|bearer|jwt|oauth/i, label: 'اختبار ربط الـ session أو الـ token بالسياق الصحيح' },
+    { re: /endpoint|route|path|parameter|\bapi\/|\bws\/|query/i, label: 'مراجعة الـ endpoint والـ parameters المؤثرة' },
+    { re: /\bwebsocket\b|handshake|frame/i, label: 'فهم الـ handshake أو الرسائل الخاصة بالـ WebSocket' },
+    { re: /payload|probe|proof of concept|poc/i, label: 'بناء probe أو payload صغير يثبت الفكرة' },
+    { re: /chain|pivot/i, label: 'ربط أكتر من خطوة أو primitive مع بعض' },
+    { re: /upload|file/i, label: 'التعامل مع ملف أو محتوى مرفوع كجزء من الاختبار' },
+    { re: /deserializ/i, label: 'تعديل object أو blob قبل إعادة إرساله' },
+    { re: /template|expression/i, label: 'تجربة expression بسيطة لقياس تنفيذ الـ template' },
+];
+
+const SUMMARY_ROOT_CAUSE_RULES = [
+    { re: /authorization|access control|permission|role/i, label: 'غياب authorization check واضح على السيرفر' },
+    { re: /validation|validate|trust|user input|untrusted/i, label: 'ثقة زيادة في input جاي من اليوزر' },
+    { re: /host header|authority|header/i, label: 'اعتماد غير آمن على header يقدر المهاجم يتحكم فيه' },
+    { re: /\bcookie\b|session|token|jwt|oauth/i, label: 'ربط ضعيف بين الـ session أو الـ token والسياق الحقيقي' },
+    { re: /deserialize|gadget|object/i, label: 'فك أو بناء object من غير قيود كفاية' },
+    { re: /template|expression/i, label: 'تنفيذ template أو expression في context أخطر من المطلوب' },
+    { re: /xml|dtd|entity/i, label: 'إعداد parser أو format يسمح بسلوك خطر' },
+    { re: /url|ssrf|metadata|redirect/i, label: 'السيرفر بيثق في destination أو URL من غير allowlist قوية' },
+    { re: /path traversal|include|file read|local file/i, label: 'التحكم في path أو file access من غير تقييد كفاية' },
+    { re: /race|concurrent|parallel/i, label: 'التطبيق بيفصل بين التحقق والتنفيذ بشكل يسمح بتسابق الطلبات' },
+];
+
+const SUMMARY_DEFENSE_RULES = [
+    { re: /authorization|access control|permission/i, label: 'مراجعة authorization على السيرفر لكل request أو object' },
+    { re: /allowlist|whitelist/i, label: 'استخدام allowlist واضحة بدل الاعتماد على input حر' },
+    { re: /sanitize|encoding|escape|csp/i, label: 'تطبيق encoding أو sanitization حسب الـ context' },
+    { re: /prepared statement|parameterized/i, label: 'استخدام queries parameterized بدل تركيب input مباشر' },
+    { re: /patch|upgrade|update/i, label: 'تطبيق patch أو تحديث النسخة المتأثرة' },
+    { re: /rate limit|lock|transaction|idempotency/i, label: 'إضافة locking أو idempotency أو rate limiting حسب السيناريو' },
+    { re: /validate|validation|server-side/i, label: 'نقل validation الحساسة إلى السيرفر بشكل صريح' },
+    { re: /disable|sandbox|hardening|external entities|dtd/i, label: 'تعطيل الميزة الخطرة أو حصرها في sandbox آمن' },
+];
+
+const RESEARCH_PROFILE_RE = /\b(research|how to|guide|methodology|workflow|technique|tool(?:ing)?|scanner|internals?|turbo intruder|burp suite|websocket)\b/i;
+const DIRECT_VULN_HINT_RE = /\b(vulnerability|exploit|bypass|rce|xss|sqli|sql injection|ssrf|idor|csrf|xxe|ssti|deserialization|open redirect|auth(?:entication|orization)|takeover|lfi|file read|command injection|path traversal|cve-\d{4}-\d+)\b/i;
+
 function extractRepresentativeCodeBlock(markdown) {
     const blocks = [...String(markdown || '').matchAll(/```(\w+)?\n([\s\S]*?)```/g)];
     for (const match of blocks) {
         const lang = match[1] || '';
         const body = match[2].trim();
         const lines = body.split('\n').map(l => l.trimEnd()).filter(Boolean);
-        if (lines.length >= 1 && lines.length <= 14 && body.length <= 900) {
+        const bestLine = lines.find(line => looksLikePayloadSnippet(line)) || '';
+        if (bestLine) {
+            return { lang, body: bestLine };
+        }
+        if (lines.length >= 1 && lines.length <= 14 && body.length <= 900 && lines.some(line => /(GET |POST |PUT |DELETE |PATCH |HTTP\/1\.[01]|Authorization:|Bearer )/i.test(line))) {
             return { lang, body: lines.join('\n') };
         }
     }
@@ -1877,6 +2002,43 @@ function trimSummarySnippet(text, maxLength=220) {
     return `${(lastBreak > 60 ? sliced.slice(0, lastBreak) : sliced).trim()}...`;
 }
 
+function extractMarkdownHeadings(markdown, limit=8) {
+    return [...String(markdown || '').matchAll(/^#{1,6}\s+(.+)$/gm)]
+        .map(match => stripMarkdownInline(match[1]))
+        .filter(Boolean)
+        .slice(0, limit);
+}
+
+function joinArabicList(items) {
+    const values = uniqueValues((items || []).map(item => String(item || '').trim()).filter(Boolean));
+    if (!values.length) return '';
+    if (values.length === 1) return values[0];
+    if (values.length === 2) return `${values[0]} و${values[1]}`;
+    return `${values.slice(0, -1).join('، ')}، و${values[values.length - 1]}`;
+}
+
+function collectSummaryLabels(text, rules, limit=3) {
+    const haystack = String(text || '');
+    const labels = [];
+    for (const rule of rules) {
+        if (rule.re.test(haystack) && !labels.includes(rule.label)) {
+            labels.push(rule.label);
+            if (labels.length >= limit) break;
+        }
+    }
+    return labels;
+}
+
+function looksLikePayloadSnippet(text) {
+    const snippet = stripMarkdownInline(text);
+    if (!snippet || snippet.length < 4 || snippet.length > 140) return false;
+    if (/\.(png|jpg|jpeg|gif|svg|webp|css|js)$/i.test(snippet)) return false;
+    if (/content\/images|callout|profile|avatar/i.test(snippet)) return false;
+    if (/^[A-Za-z_$][A-Za-z0-9_$]*\s*=/.test(snippet)) return false;
+    if (/new\s+[A-Z][A-Za-z0-9_]*\(/.test(snippet)) return false;
+    return /(GET |POST |PUT |DELETE |PATCH |HTTP\/1\.[01]|Authorization:|Bearer |CVE-\d{4}-\d+|<script|{{.*}}|\.\.\/|\/api\/|\/ws\b|https?:\/\/|file:\/\/|169\.254\.169\.254|\?[A-Za-z0-9_.-]+=)/i.test(snippet);
+}
+
 function extractSummaryParagraphs(markdown, limit=6) {
     return String(markdown || '')
         .replace(/\r\n/g, '\n')
@@ -1911,17 +2073,28 @@ function extractMitigationSnippet(markdown) {
 function extractInterestingArtifact(markdown) {
     const code = extractRepresentativeCodeBlock(markdown);
     if (code?.body) {
-        const firstLine = code.body.split('\n').map(line => line.trim()).find(Boolean);
+        const firstLine = code.body.split('\n').map(line => line.trim()).find(line => looksLikePayloadSnippet(line));
         if (firstLine) return trimSummarySnippet(firstLine, 110);
     }
 
-    const pathMatch = String(markdown || '').match(/\/[A-Za-z0-9._~!$&'()*+,;=:@%/-]{4,}/);
-    if (pathMatch?.[0]) return pathMatch[0];
+    const httpLine = String(markdown || '').match(/\b(GET|POST|PUT|DELETE|PATCH)\s+[^\n]{1,110}/i);
+    if (httpLine?.[0] && looksLikePayloadSnippet(httpLine[0])) return trimSummarySnippet(httpLine[0], 110);
+
+    const pathMatch = String(markdown || '').match(/\/[A-Za-z0-9._~!$&'()*+,;=:@%/?-]{4,}/);
+    if (pathMatch?.[0] && looksLikePayloadSnippet(pathMatch[0])) return trimSummarySnippet(pathMatch[0], 90);
 
     const cveMatch = String(markdown || '').match(/CVE-\d{4}-\d{4,}/i);
     if (cveMatch?.[0]) return cveMatch[0].toUpperCase();
 
     return '';
+}
+
+function inferArticleMode(title, tags, body) {
+    const haystack = `${title}\n${(tags || []).join(' ')}\n${body}`;
+    const hasDirectVuln = (tags || []).some(tag => ['rce', 'deserialization', 'sqli', 'ssrf', 'ssti', 'xxe', 'auth', 'ato', 'idor', 'xss', 'csrf', 'lfi', 'open-redirect', 'race-condition'].includes(tag))
+        || DIRECT_VULN_HINT_RE.test(haystack);
+    if (!hasDirectVuln && RESEARCH_PROFILE_RE.test(haystack)) return 'research';
+    return 'vulnerability';
 }
 
 class WriteupPostProcessor {
@@ -1936,6 +2109,7 @@ class WriteupPostProcessor {
         if (haystack.includes('xss')) return VULN_PROFILES.xss;
         if (haystack.includes('ssrf')) return VULN_PROFILES.ssrf;
         if (haystack.includes('sql injection')) return VULN_PROFILES.sqli;
+        if (inferArticleMode(title, tags, body) === 'research') return VULN_PROFILES.research;
         return VULN_PROFILES.generic;
     }
 
@@ -1995,39 +2169,48 @@ class WriteupPostProcessor {
     }
 
     buildEgyptianSummary(context, cleanedBody='') {
-        const paragraphs = extractSummaryParagraphs(cleanedBody, 6);
-        const lead = paragraphs[0] ? trimSummarySnippet(paragraphs[0], 210) : '';
-        const exploit = paragraphs.find(p => /(exploit|payload|bypass|tamper|modify|request|endpoint|parameter|token|session|header|cookie|chain|execute|leak|read)/i.test(p)) || paragraphs[1] || '';
-        const rootCause = paragraphs.find(p => /(root cause|because|due to|missing|insufficient|broken|improper|misconfiguration|validation|authorization|trust)/i.test(p)) || paragraphs[0] || '';
-        const mitigation = extractMitigationSnippet(cleanedBody);
+        const headings = extractMarkdownHeadings(cleanedBody, 8);
+        const titleAndHeadings = `${context.title}\n${headings.join('\n')}\n${(context.tags || []).join(' ')}`;
+        const fullText = `${titleAndHeadings}\n${cleanedBody}`;
+        const focus = collectSummaryLabels(titleAndHeadings, SUMMARY_FOCUS_RULES, 4);
+        const methods = collectSummaryLabels(fullText, SUMMARY_METHOD_RULES, 3);
+        const rootCauses = collectSummaryLabels(fullText, SUMMARY_ROOT_CAUSE_RULES, 2);
+        const defenses = collectSummaryLabels(fullText, SUMMARY_DEFENSE_RULES, 2);
         const artifact = extractInterestingArtifact(cleanedBody);
-        const cves = extractCVEs(`${context.title} ${cleanedBody}`);
+        const cves = extractCVEs(fullText);
+        const mode = inferArticleMode(context.title, context.tags, cleanedBody);
 
         const lines = [];
-        lines.push(`المقال ده بيتكلم عن ${context.profile.arType}${cves.length ? ` ومرتبطة بـ ${cves.join(' / ')}` : ''}.`);
-
-        if (lead) {
-            lines.push(`من مضمون المقال، الفكرة الأساسية كانت: ${lead}`);
+        if (mode === 'research') {
+            lines.push(`المقال ده أقرب لشرح ${context.profile.arType}${focus.length ? ` حوالين ${joinArabicList(focus)}` : ''}${cves.length ? ` مع الإشارة لـ ${cves.join(' / ')}` : ''}.`);
+            if (methods.length) {
+                lines.push(`الكاتب مركز عمليًا على ${joinArabicList(methods)} بدل الكلام النظري فقط.`);
+            } else {
+                lines.push(context.profile.arExploit);
+            }
+            if (rootCauses.length) {
+                lines.push(`أهم ملاحظة أمنية طلعت من الشرح كانت ${joinArabicList(rootCauses)}.`);
+            }
         } else {
-            lines.push(context.profile.arExploit);
-        }
-
-        if (rootCause) {
-            lines.push(`سبب المشكلة باين إنه مرتبط بـ ${trimSummarySnippet(rootCause, 190)}.`);
-        }
-
-        if (exploit) {
-            lines.push(`الاستغلال في المقال ماشي تقريبًا كده: ${trimSummarySnippet(exploit, 190)}`);
-        } else {
-            lines.push(context.profile.arPayload);
+            lines.push(`المقال ده بيتكلم عن ${context.profile.arType}${focus.length ? ` في سياق ${joinArabicList(focus)}` : ''}${cves.length ? ` ومرتبطة بـ ${cves.join(' / ')}` : ''}.`);
+            if (rootCauses.length) {
+                lines.push(`جذر المشكلة من اللي ظاهر في المقال كان ${joinArabicList(rootCauses)}.`);
+            } else {
+                lines.push(context.profile.arExploit);
+            }
+            if (methods.length) {
+                lines.push(`الاستغلال أو التحقق ماشي غالبًا عن طريق ${joinArabicList(methods)}.`);
+            } else {
+                lines.push(context.profile.arPayload);
+            }
         }
 
         if (artifact) {
-            lines.push(`الجزء العملي اللي يستحق تفتكره كان حوالي: \`${artifact}\`.`);
+            lines.push(`أوضح artifact عملي في المقال كان \`${artifact}\` وده مفيد لو هترجع تراجع الفكرة بسرعة.`);
         }
 
-        if (mitigation) {
-            lines.push(`أما الحماية، فالكاتب كان مركز على: ${mitigation}`);
+        if (defenses.length) {
+            lines.push(`نقطة الحماية الأهم كانت ${joinArabicList(defenses)}.`);
         } else {
             lines.push(`أهم نقطة دفاعية هنا إن ${context.profile.arLearning}`);
         }
@@ -2274,8 +2457,8 @@ class FetchPreviewModal extends obsidian.Modal {
         hdr.createEl('h2', {text: scanLabel});
         const statusEl = contentEl.createDiv({cls: 'wm-scan-status'});
 
-        const folder = plugin.settings.outputFolder || 'writeups';
-        const seen = plugin.buildSeenUrlSet(folder);
+        const topicFolder = plugin.getTopicOutputFolder();
+        const seen = plugin.buildSeenUrlSet();
         const enabled = plugin.settings.sources.filter(s=>s.enabled);
         const limit = plugin.settings.limitPerSource || 20;
         const watchlist = (plugin.settings.watchlistKeywords || []).map(k=>k.toLowerCase());
@@ -2332,7 +2515,7 @@ class FetchPreviewModal extends obsidian.Modal {
                     const topicItems = await fetchTopicResults(
                         ts, seen,
                         plugin.settings.topicFolderMap || {},
-                        plugin.settings.outputFolder || 'writeups',
+                        topicFolder,
                         { syncHistory: plugin.settings.topicSyncHistory || {}, respectSchedule: false }
                     );
                     for (const item of topicItems) {
@@ -2489,9 +2672,12 @@ class FetchPreviewModal extends obsidian.Modal {
         cancelBtn.addEventListener('click', () => { this._cancelled = true; cancelBtn.setText('Cancelling...'); cancelBtn.disabled = true; });
         const logEl = contentEl.createDiv({cls: 'wm-log'});
 
-        const folder = plugin.settings.outputFolder || 'writeups';
-        await plugin.ensureFolder(folder);
-        const seen = plugin.buildSeenUrlSet(folder);
+        const feedFolder = plugin.getFeedOutputFolder();
+        const topicFolder = plugin.getTopicOutputFolder();
+        await plugin.ensureFolder(feedFolder);
+        await plugin.ensureFolder(topicFolder);
+        const seen = plugin.buildSeenUrlSet();
+        const touchedRoots = new Set();
 
         // Ensure stats object exists
         if (!plugin.settings.stats) plugin.settings.stats = {totalFetched:0,totalFailed:0,bySource:{},byTag:{},byMonth:{}};
@@ -2530,11 +2716,13 @@ class FetchPreviewModal extends obsidian.Modal {
             }
 
             try {
-                const saved = await plugin.saveWriteup(folder, {...item, body, originalUrl, fetchedFrom, fallbackUsed, fetchStatus}, seen);
+                const saveRoot = item.topicFolder ? topicFolder : feedFolder;
+                const saved = await plugin.saveWriteup(saveRoot, {...item, body, originalUrl, fetchedFrom, fallbackUsed, fetchStatus}, seen);
                 if (!saved) {
                     logRow.querySelector('.wm-log-icon').setText('↩️ ');
                     continue;
                 }
+                touchedRoots.add(saveRoot);
                 this.savedCount++;
                 // Update stats
                 const s = plugin.settings.stats;
@@ -2555,7 +2743,9 @@ class FetchPreviewModal extends obsidian.Modal {
 
         progFill.style.width = '100%';
         progLabel.setText(`${this.savedCount} / ${selected.length}`);
-        await plugin.updateIndex(folder);
+        for (const root of touchedRoots) {
+            await plugin.updateIndex(root);
+        }
         plugin.settings.seenUrls = [...seen].slice(-3000);
         plugin.settings.failedUrls = this.failedItems.map(i=>i.url);
         plugin.settings.lastFetched = new Date().toLocaleString();
@@ -2634,10 +2824,19 @@ class SourcesModal extends obsidian.Modal {
 
         const bar = contentEl.createDiv({cls: 'wm-bar'});
         const folderF = bar.createDiv({cls: 'wm-bar-field'});
-        folderF.createEl('label', {text: 'Folder'});
+        folderF.createEl('label', {text: 'Feeds Folder'});
         const folderIn = folderF.createEl('input', {type:'text', placeholder:'writeups'});
         folderIn.value = plugin.settings.outputFolder;
         folderIn.addEventListener('change', async () => { plugin.settings.outputFolder = folderIn.value||'writeups'; await plugin.saveSettings(); });
+
+        const topicFolderF = bar.createDiv({cls: 'wm-bar-field'});
+        topicFolderF.createEl('label', {text: 'Topic / Vuln Folder'});
+        const topicFolderIn = topicFolderF.createEl('input', {type:'text', placeholder:'writeups-by-topic'});
+        topicFolderIn.value = plugin.settings.topicOutputFolder || 'writeups-by-topic';
+        topicFolderIn.addEventListener('change', async () => {
+            plugin.settings.topicOutputFolder = topicFolderIn.value || 'writeups-by-topic';
+            await plugin.saveSettings();
+        });
 
         const limitF = bar.createDiv({cls: 'wm-bar-field'});
         limitF.createEl('label', {text: 'Limit / source'});
@@ -2963,6 +3162,8 @@ class SourcesModal extends obsidian.Modal {
         exportBtn.addEventListener('click', async () => {
             const json = JSON.stringify({
                 version: 1,
+                outputFolder: plugin.settings.outputFolder || 'writeups',
+                topicOutputFolder: plugin.settings.topicOutputFolder || 'writeups-by-topic',
                 sources: plugin.settings.sources || [],
                 topicSources: plugin.settings.topicSources || [],
                 topicFolderMap: plugin.settings.topicFolderMap || {},
@@ -3029,6 +3230,12 @@ class SourcesModal extends obsidian.Modal {
                 const topicSources = Array.isArray(parsed?.topicSources) ? parsed.topicSources : [];
                 let added = 0;
                 let addedTopics = 0;
+                if (parsed?.outputFolder && typeof parsed.outputFolder === 'string') {
+                    plugin.settings.outputFolder = parsed.outputFolder.trim() || plugin.settings.outputFolder || 'writeups';
+                }
+                if (parsed?.topicOutputFolder && typeof parsed.topicOutputFolder === 'string') {
+                    plugin.settings.topicOutputFolder = parsed.topicOutputFolder.trim() || plugin.settings.topicOutputFolder || 'writeups-by-topic';
+                }
                 for (const s of rssSources) {
                     if (!s.name || !s.url) continue;
                     // Validate URL format and protocol
@@ -3133,6 +3340,7 @@ class SourcesModal extends obsidian.Modal {
         const meta = info.createDiv({cls:'wm-preview-meta'});
         meta.createSpan({text: `topics: ${normalizeTopicList(src).join(', ')}`, cls:'wm-badge-source'});
         meta.createSpan({text: `folder: ${src.category || 'auto-map'}`, cls:'wm-meta-date'});
+        meta.createSpan({text: `root: ${plugin.getTopicOutputFolder()}`, cls:'wm-meta-date'});
         meta.createSpan({text: src.autoSync ? `auto: ${src.syncFrequency}` : 'auto: off', cls:'wm-meta-date'});
 
         if (!src.isBuiltIn) {
@@ -3254,6 +3462,26 @@ class WriteupSettingTab extends obsidian.PluginSettingTab {
                 }, 500);
                 t.onChange(debouncedSave);
             });
+        new obsidian.Setting(containerEl).setName('Feeds Folder').setDesc('Base folder used for RSS/source-based writeups')
+            .addText(t => {
+                t.setPlaceholder('writeups');
+                t.setValue(this.plugin.settings.outputFolder || 'writeups');
+                const debouncedSave = debounce(async (v) => {
+                    this.plugin.settings.outputFolder = v.trim() || 'writeups';
+                    await this.plugin.saveSettings();
+                }, 400);
+                t.onChange(debouncedSave);
+            });
+        new obsidian.Setting(containerEl).setName('Topic / Vulnerability Folder').setDesc('Separate base folder for topic-based and vulnerability-focused writeups like XSS, SQLi, XXE, SSRF, Mobile, Network, and AD')
+            .addText(t => {
+                t.setPlaceholder('writeups-by-topic');
+                t.setValue(this.plugin.settings.topicOutputFolder || 'writeups-by-topic');
+                const debouncedSave = debounce(async (v) => {
+                    this.plugin.settings.topicOutputFolder = v.trim() || 'writeups-by-topic';
+                    await this.plugin.saveSettings();
+                }, 400);
+                t.onChange(debouncedSave);
+            });
         if (this.plugin.settings.lastFetched) containerEl.createEl('p',{text:`Last fetched: ${this.plugin.settings.lastFetched}`, cls:'setting-item-description'});
     }
 }
@@ -3265,6 +3493,18 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 // ─── Main Plugin ──────────────────────────────────────────────────────────────
 
 class SecurityWriteupCollectorPlugin extends obsidian.Plugin {
+    getFeedOutputFolder() {
+        return (this.settings.outputFolder || 'writeups').trim() || 'writeups';
+    }
+
+    getTopicOutputFolder() {
+        return (this.settings.topicOutputFolder || 'writeups-by-topic').trim() || 'writeups-by-topic';
+    }
+
+    getWriteupRootFolders() {
+        return uniqueValues([this.getFeedOutputFolder(), this.getTopicOutputFolder()].filter(Boolean));
+    }
+
     async onload() {
         await this.loadSettings();
 
@@ -3291,7 +3531,7 @@ class SecurityWriteupCollectorPlugin extends obsidian.Plugin {
             this._autoFetchTimer = setTimeout(async () => {
                 try {
                     const enabled = this.settings.sources.filter(s=>s.enabled);
-                    const seen = this.buildSeenUrlSet(this.settings.outputFolder || 'writeups');
+                    const seen = this.buildSeenUrlSet();
                     let newCount = 0;
                     const alertCandidates = [];
                     for (const src of enabled) {
@@ -3320,7 +3560,7 @@ class SecurityWriteupCollectorPlugin extends obsidian.Plugin {
                                 topicSource,
                                 seen,
                                 this.settings.topicFolderMap || {},
-                                this.settings.outputFolder || 'writeups',
+                                this.getTopicOutputFolder(),
                                 { syncHistory: this.settings.topicSyncHistory || {}, respectSchedule: true }
                             );
                             newCount += items.length;
@@ -3546,8 +3786,8 @@ class SecurityWriteupCollectorPlugin extends obsidian.Plugin {
     }
 
     async collectAutoFetchCandidates(options = {}) {
-        const folder = this.settings.outputFolder || 'writeups';
-        const seen = options.seenSet || this.buildSeenUrlSet(folder);
+        const topicFolder = this.getTopicOutputFolder();
+        const seen = options.seenSet || this.buildSeenUrlSet();
         const scanSeen = new Set(seen);
         const watchlist = (this.settings.watchlistKeywords || []).map(keyword => String(keyword || '').toLowerCase()).filter(Boolean);
         const candidates = [];
@@ -3577,7 +3817,7 @@ class SecurityWriteupCollectorPlugin extends obsidian.Plugin {
                     topicSource,
                     scanSeen,
                     this.settings.topicFolderMap || {},
-                    folder,
+                    topicFolder,
                     { syncHistory: this.settings.topicSyncHistory || {}, respectSchedule: options.respectSchedule !== false }
                 );
 
@@ -3595,13 +3835,16 @@ class SecurityWriteupCollectorPlugin extends obsidian.Plugin {
     }
 
     async saveAutoFetchedWriteups(items, seenSet) {
-        const folder = this.settings.outputFolder || 'writeups';
-        await this.ensureFolder(folder);
+        const feedFolder = this.getFeedOutputFolder();
+        const topicFolder = this.getTopicOutputFolder();
+        await this.ensureFolder(feedFolder);
+        await this.ensureFolder(topicFolder);
 
         if (!this.settings.stats) this.settings.stats = {totalFetched:0,totalFailed:0,bySource:{},byTag:{},byMonth:{}};
 
         const savedItems = [];
         const failedItems = [];
+        const touchedRoots = new Set();
 
         for (const item of items || []) {
             let body = item.rssBody || '';
@@ -3622,9 +3865,11 @@ class SecurityWriteupCollectorPlugin extends obsidian.Plugin {
             }
 
             try {
-                const saved = await this.saveWriteup(folder, {...item, body, originalUrl, fetchedFrom, fallbackUsed, fetchStatus}, seenSet);
+                const saveRoot = item.topicFolder ? topicFolder : feedFolder;
+                const saved = await this.saveWriteup(saveRoot, {...item, body, originalUrl, fetchedFrom, fallbackUsed, fetchStatus}, seenSet);
                 if (!saved) continue;
 
+                touchedRoots.add(saveRoot);
                 savedItems.push({...item, originalUrl, fetchedFrom, fallbackUsed, fetchStatus});
                 const stats = this.settings.stats;
                 stats.totalFetched++;
@@ -3642,7 +3887,9 @@ class SecurityWriteupCollectorPlugin extends obsidian.Plugin {
         }
 
         if (savedItems.length > 0) {
-            await this.updateIndex(folder);
+            for (const root of touchedRoots) {
+                await this.updateIndex(root);
+            }
             this.settings.lastFetched = new Date().toLocaleString();
         }
 
@@ -3724,8 +3971,12 @@ class SecurityWriteupCollectorPlugin extends obsidian.Plugin {
         const seen = new Set();
         addSeenUrls(seen, ...((this.settings.seenUrls || []).slice(-3000)));
 
+        const roots = Array.isArray(baseFolder)
+            ? baseFolder.filter(Boolean)
+            : (baseFolder ? [baseFolder] : this.getWriteupRootFolders());
+
         const files = this.app.vault.getMarkdownFiles()
-            .filter(f => f.path.startsWith(`${baseFolder}/`) && f.name !== 'index.md');
+            .filter(f => roots.some(root => f.path.startsWith(`${root}/`)) && f.name !== 'index.md');
 
         for (const file of files) {
             const frontmatter = this.app.metadataCache.getFileCache(file)?.frontmatter || {};
@@ -3817,18 +4068,32 @@ class SecurityWriteupCollectorPlugin extends obsidian.Plugin {
         if (!this.settings.lastDailyAutoFetchAt) this.settings.lastDailyAutoFetchAt = '';
         this.settings.cveTopicKeywords = normalizeCveKeywordList(this.settings.cveTopicKeywords || DEFAULT_SETTINGS.cveTopicKeywords);
         if (!this.settings.watchlistKeywords) this.settings.watchlistKeywords = [...DEFAULT_SETTINGS.watchlistKeywords];
+        this.settings.outputFolder = (this.settings.outputFolder || DEFAULT_SETTINGS.outputFolder).trim() || DEFAULT_SETTINGS.outputFolder;
+        this.settings.topicOutputFolder = (this.settings.topicOutputFolder || DEFAULT_SETTINGS.topicOutputFolder).trim() || DEFAULT_SETTINGS.topicOutputFolder;
         if (!this.settings.stats) this.settings.stats = {totalFetched:0,totalFailed:0,bySource:{},byTag:{},byMonth:{}};
-        // Deep merge topic sources
+        // Deep merge topic sources and migrate old Medium sources to DuckDuckGo
         const defaultTopicIds = new Set(DEFAULT_SETTINGS.topicSources.map(s => s.id));
         if (!this.settings.topicSources) {
             this.settings.topicSources = DEFAULT_SETTINGS.topicSources.map(s => ({...normalizeTopicSource(s), isBuiltIn: true}));
         } else {
-            const savedTopicIds = new Set(this.settings.topicSources.map(s => s.id));
+            let migratedSources = this.settings.topicSources.map(s => {
+                let norm = normalizeTopicSource(s);
+                if (norm.id && norm.id.startsWith('medium-') && norm.baseUrl && norm.baseUrl.includes('medium.com/search')) {
+                    norm.id = norm.id.replace(/^medium-/, 'ddg-');
+                    norm.name = 'DuckDuckGo';
+                    norm.baseUrl = 'https://html.duckduckgo.com/html/?q=security+writeup+';
+                }
+                return norm;
+            });
+            const savedTopicIds = new Set(migratedSources.map(s => s.id));
             const missingTopics = DEFAULT_SETTINGS.topicSources.filter(s => !savedTopicIds.has(s.id));
             this.settings.topicSources = [
-                ...this.settings.topicSources.map(s => normalizeTopicSource(s)),
+                ...migratedSources,
                 ...missingTopics.map(s => ({...normalizeTopicSource(s), isBuiltIn: true})),
             ];
+            const uniqueTopics = new Map();
+            for (const src of this.settings.topicSources) uniqueTopics.set(src.id, src);
+            this.settings.topicSources = Array.from(uniqueTopics.values());
         }
         for (const src of this.settings.topicSources) {
             if (defaultTopicIds.has(src.id)) src.isBuiltIn = true;

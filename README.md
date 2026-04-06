@@ -27,7 +27,7 @@ An Obsidian plugin that collects cybersecurity writeups offline into your vault 
 - Toggle full-content mode on/off for faster RSS-only imports
 
 ### 🎯 Topic-Based Sources
-- **Topic search sources** — add dynamic search endpoints such as `https://medium.com/search?q=` or GitHub search
+- **Topic search sources** — add dynamic search endpoints, now defaulting to `https://html.duckduckgo.com/html/?q=` to bypass scraping blockers and diversify index sources.
 - **Multi-topic sync** — register one source with multiple topics like `idor, xss, ssrf, sqli`
 - **Auto-folder routing** — map topics to folders like `Writeups/Web/IDOR`, with `Writeups/Unsorted/<topic>` as fallback
 - **Per-source sync controls** — configure enabled state, auto-sync, and sync frequency
