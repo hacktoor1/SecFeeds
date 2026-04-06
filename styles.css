@@ -565,12 +565,21 @@
 .wm-btn-fetch,
 .wm-btn-primary {
     border: 1px solid rgba(255, 255, 255, 0.12);
-    color: #0a0a0a;
+    color: #0a0a0a !important;
+    -webkit-text-fill-color: #0a0a0a;
+    text-shadow: none;
     font-weight: 650;
     letter-spacing: -0.01em;
     cursor: pointer;
     background: linear-gradient(135deg, #fafafa 0%, #d4d4d8 55%, #a1a1aa 100%);
     box-shadow: 0 12px 28px rgba(255, 255, 255, 0.08);
+}
+
+.wm-btn-add *,
+.wm-btn-fetch *,
+.wm-btn-primary * {
+    color: inherit !important;
+    -webkit-text-fill-color: inherit;
 }
 
 .wm-btn-add {
