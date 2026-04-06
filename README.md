@@ -1,6 +1,6 @@
 # 🔐 Security Writeup Collector
 
-An Obsidian plugin that collects cybersecurity writeups offline into your vault as clean, richly-formatted Markdown notes. It combines RSS feeds, topic-based discovery, Medium fallback handling, duplicate prevention, Egyptian-Arabic summaries, reusable test cases, local alerts, and daily auto-fetch for high-signal writeups.
+An Obsidian plugin that collects cybersecurity writeups offline into your vault as clean, richly-formatted Markdown notes. It combines RSS feeds, topic-based discovery, Medium fallback handling, duplicate prevention, article-aware Egyptian-Arabic summaries, reusable test cases, local alerts, and daily auto-fetch for high-signal writeups.
 
 ## ✨ Features
 
@@ -67,7 +67,7 @@ An Obsidian plugin that collects cybersecurity writeups offline into your vault 
 ### 🧹 Content Processing Pipeline
 - **Fetch → Clean → Summarize → Generate Test Case → Save Markdown**
 - **Aggressive cleanup** — removes ads, newsletter blocks, related-post cards, repeated headers, share buttons, boilerplate, and noisy page chrome
-- **Egyptian Arabic summary** — inserts a concise revision-friendly summary directly after the frontmatter
+- **Article-aware Egyptian Arabic summary** — inserts a detailed revision-friendly summary directly after the frontmatter, based on the cleaned article itself instead of a generic template
 - **Test case generator** — appends a reusable block with objective, steps, payload, vulnerable behavior, secure behavior, and inferred metadata
 - **AI-style enrichment heuristics** — fills severity, CWE, OWASP category, attack flow, and extracted CVEs when possible
 
@@ -81,7 +81,7 @@ An Obsidian plugin that collects cybersecurity writeups offline into your vault 
 ### 📝 Rich Markdown Output
 Each saved writeup includes:
 - **Enhanced YAML frontmatter** — `reading_time`, `word_count`, `severity`, `platform`, `cve_ids`, `excerpt`, `original_url`, `fetched_from`, `fallback_used`, `fetch_status`
-- **Egyptian Arabic summary block** — concise revision-friendly notes directly after the frontmatter
+- **Egyptian Arabic summary block** — article-specific revision notes generated from the writeup's real paragraphs, exploit flow, root cause, and mitigation guidance
 - **Reusable test case block** — copy-friendly vulnerability checklist with payload, secure behavior, CWE, OWASP, and attack flow
 - **Info card callout** — Visual metadata table at the top with all details
 - **Table of Contents** — Auto-generated from article headings (3+ headings)
@@ -176,6 +176,13 @@ Each saved writeup includes:
 4. It saves the top configured batch size, which defaults to `5` writeups every `24` hours.
 5. On mobile, this works while Obsidian is open or reopening, not as a guaranteed background push system when the app is fully closed.
 
+### Egyptian Arabic Summary Flow
+1. The plugin cleans the fetched writeup and strips noisy sections such as banners, related cards, and repetitive chrome.
+2. It extracts the strongest article paragraphs instead of relying on one fixed summary template.
+3. It looks for the practical exploit path, likely root cause, mitigation advice, and memorable artifacts such as payloads, endpoints, or CVE IDs.
+4. It writes the summary in clear Egyptian Arabic so the note stays useful for later review and notetaking.
+5. If the article content is too weak or incomplete, the plugin falls back gracefully to vulnerability-profile guidance rather than inventing details.
+
 ### Built-In Commands
 - `Open Sources Manager`
 - `Collect Writeups (with preview)`
@@ -201,7 +208,7 @@ topic: ssrf
 ```
 
 The body is saved as note-friendly Markdown with:
-- a summary callout in Egyptian Arabic
+- a detailed Egyptian-Arabic summary callout tailored to that specific article
 - a cleaned writeup body
 - a reusable `Test Case` section
 - Dataview-friendly metadata for later filtering

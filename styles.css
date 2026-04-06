@@ -1383,14 +1383,17 @@
     }
 
     .wm-sel-row .wm-btn-sm {
-        flex: 1 1 calc(50% - 4px);
-        min-height: 40px;
+        flex: 0 1 auto;
+        min-height: 34px;
+        padding: 5px 10px;
+        font-size: 11.5px;
     }
 
     .wm-footer {
         position: sticky;
         bottom: calc(env(safe-area-inset-bottom) * -1);
         gap: 8px;
+        justify-content: flex-start;
         margin: 16px -16px calc(-14px - env(safe-area-inset-bottom));
         padding:
             10px
@@ -1421,42 +1424,37 @@
     .wm-btn-secondary,
     .wm-btn-cache,
     .wm-btn-retry {
-        min-height: 38px;
-        padding: 9px 12px;
-        font-size: 12.5px;
+        flex: 0 1 auto;
+        min-height: 34px;
+        padding: 6px 11px;
+        font-size: 11.5px;
+        line-height: 1.2;
     }
 
     .wm-btn-fetch,
     .wm-btn-primary {
         width: auto;
-        flex: 1 1 calc(50% - 4px);
         justify-content: center;
         text-align: center;
     }
 
-    .wm-footer > .wm-btn-fetch:only-child,
-    .wm-footer > .wm-btn-primary:only-child {
-        flex-basis: 100%;
-    }
-
     .wm-add .wm-btn-add {
         width: auto;
-        min-width: 132px;
+        min-width: 0;
         align-self: flex-start;
     }
 
     .wm-btn-secondary,
     .wm-btn-cache,
     .wm-btn-retry {
-        flex: 1 1 calc(50% - 5px);
         min-width: 0;
         text-align: center;
     }
 
     .wm-btn-sm {
-        min-height: 36px;
-        padding: 6px 10px;
-        font-size: 12px;
+        min-height: 32px;
+        padding: 5px 9px;
+        font-size: 11.5px;
     }
 
     .wm-preview-list {
@@ -1515,14 +1513,6 @@
     .wm-topic-options,
     .wm-stats-overview {
         grid-template-columns: 1fr;
-    }
-
-    .wm-footer > .wm-btn-fetch,
-    .wm-footer > .wm-btn-primary,
-    .wm-footer > .wm-btn-secondary,
-    .wm-footer > .wm-btn-cache,
-    .wm-footer > .wm-btn-retry {
-        flex-basis: 100%;
     }
 
     .wm-chart-row {

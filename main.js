@@ -1835,6 +1835,95 @@ function normalizedBlockText(block) {
         .trim();
 }
 
+function stripMarkdownInline(text) {
+    return String(text || '')
+        .replace(/`([^`]+)`/g, '$1')
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+        .replace(/[*_~>#-]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function isSummaryCandidateParagraph(block) {
+    const text = stripMarkdownInline(block);
+    if (!text || text.length < 45) return false;
+    if (/^#{1,6}\s+/.test(block)) return false;
+    if (/^\d+\.\s+/.test(block)) return false;
+    if (/^[-*]\s+/.test(block)) return false;
+    if (/^```/.test(block)) return false;
+    if (/^>\s*/.test(block)) return false;
+    if (/^(original|references?|related writeups?)$/i.test(text)) return false;
+    return true;
+}
+
+function scoreSummaryParagraph(block) {
+    const text = stripMarkdownInline(block);
+    const lower = text.toLowerCase();
+    let score = Math.min(30, Math.floor(text.length / 12));
+    if (/(exploit|exploitation|abuse|payload|bypass|tamper|modify|leak|read|execute|trigger|chain|intercept|request|response|endpoint|parameter|token|session|header|cookie)/i.test(lower)) score += 30;
+    if (/(root cause|because|due to|the issue|vulnerability|bug|misconfiguration|broken|improper|missing|insufficient)/i.test(lower)) score += 20;
+    if (/(mitigation|fix|patch|remediation|prevent|secure|defense|validate|authorization|allowlist|sanitize)/i.test(lower)) score += 12;
+    if (/\/[A-Za-z0-9._~!$&'()*+,;=:@%/-]+/.test(text)) score += 10;
+    if (/\b(GET|POST|PUT|DELETE|PATCH)\b/.test(text)) score += 8;
+    if (/CVE-\d{4}-\d{4,}/i.test(text)) score += 8;
+    return score;
+}
+
+function trimSummarySnippet(text, maxLength=220) {
+    const cleaned = stripMarkdownInline(text);
+    if (cleaned.length <= maxLength) return cleaned;
+    const sliced = cleaned.slice(0, maxLength);
+    const lastBreak = Math.max(sliced.lastIndexOf('. '), sliced.lastIndexOf(', '), sliced.lastIndexOf(' '));
+    return `${(lastBreak > 60 ? sliced.slice(0, lastBreak) : sliced).trim()}...`;
+}
+
+function extractSummaryParagraphs(markdown, limit=6) {
+    return String(markdown || '')
+        .replace(/\r\n/g, '\n')
+        .split(/\n{2,}/)
+        .map(block => block.trim())
+        .filter(isSummaryCandidateParagraph)
+        .map(block => ({ block, score: scoreSummaryParagraph(block) }))
+        .sort((a, b) => b.score - a.score)
+        .slice(0, limit)
+        .map(item => item.block);
+}
+
+function extractMitigationSnippet(markdown) {
+    const blocks = String(markdown || '')
+        .replace(/\r\n/g, '\n')
+        .split(/\n{2,}/)
+        .map(block => block.trim())
+        .filter(Boolean);
+
+    const preferredHeadingIndex = blocks.findIndex(block => /^#{1,6}\s+/.test(block) && /(mitigation|remediation|fix|prevention|defense|hardening|patch)/i.test(block));
+    if (preferredHeadingIndex >= 0) {
+        for (let i = preferredHeadingIndex + 1; i < blocks.length; i++) {
+            if (/^#{1,6}\s+/.test(blocks[i])) break;
+            if (isSummaryCandidateParagraph(blocks[i])) return trimSummarySnippet(blocks[i], 170);
+        }
+    }
+
+    const mitigationBlock = blocks.find(block => /(mitigation|fix|remediation|prevent|secure|validate|allowlist|authorization check|server-side)/i.test(block));
+    return mitigationBlock ? trimSummarySnippet(mitigationBlock, 170) : '';
+}
+
+function extractInterestingArtifact(markdown) {
+    const code = extractRepresentativeCodeBlock(markdown);
+    if (code?.body) {
+        const firstLine = code.body.split('\n').map(line => line.trim()).find(Boolean);
+        if (firstLine) return trimSummarySnippet(firstLine, 110);
+    }
+
+    const pathMatch = String(markdown || '').match(/\/[A-Za-z0-9._~!$&'()*+,;=:@%/-]{4,}/);
+    if (pathMatch?.[0]) return pathMatch[0];
+
+    const cveMatch = String(markdown || '').match(/CVE-\d{4}-\d{4,}/i);
+    if (cveMatch?.[0]) return cveMatch[0].toUpperCase();
+
+    return '';
+}
+
 class WriteupPostProcessor {
     detectPrimaryProfile(title, tags, body) {
         const haystack = `${title}\n${body}`.toLowerCase();
@@ -1905,13 +1994,45 @@ class WriteupPostProcessor {
         return cleaned;
     }
 
-    buildEgyptianSummary(context) {
-        return [
-            `المقال ده بيتكلم عن ${context.profile.arType}.`,
-            context.profile.arExploit,
-            context.profile.arPayload,
-            `أهم حاجة تطلع بيها هنا إن ${context.profile.arLearning}`,
-        ].join('\n');
+    buildEgyptianSummary(context, cleanedBody='') {
+        const paragraphs = extractSummaryParagraphs(cleanedBody, 6);
+        const lead = paragraphs[0] ? trimSummarySnippet(paragraphs[0], 210) : '';
+        const exploit = paragraphs.find(p => /(exploit|payload|bypass|tamper|modify|request|endpoint|parameter|token|session|header|cookie|chain|execute|leak|read)/i.test(p)) || paragraphs[1] || '';
+        const rootCause = paragraphs.find(p => /(root cause|because|due to|missing|insufficient|broken|improper|misconfiguration|validation|authorization|trust)/i.test(p)) || paragraphs[0] || '';
+        const mitigation = extractMitigationSnippet(cleanedBody);
+        const artifact = extractInterestingArtifact(cleanedBody);
+        const cves = extractCVEs(`${context.title} ${cleanedBody}`);
+
+        const lines = [];
+        lines.push(`المقال ده بيتكلم عن ${context.profile.arType}${cves.length ? ` ومرتبطة بـ ${cves.join(' / ')}` : ''}.`);
+
+        if (lead) {
+            lines.push(`من مضمون المقال، الفكرة الأساسية كانت: ${lead}`);
+        } else {
+            lines.push(context.profile.arExploit);
+        }
+
+        if (rootCause) {
+            lines.push(`سبب المشكلة باين إنه مرتبط بـ ${trimSummarySnippet(rootCause, 190)}.`);
+        }
+
+        if (exploit) {
+            lines.push(`الاستغلال في المقال ماشي تقريبًا كده: ${trimSummarySnippet(exploit, 190)}`);
+        } else {
+            lines.push(context.profile.arPayload);
+        }
+
+        if (artifact) {
+            lines.push(`الجزء العملي اللي يستحق تفتكره كان حوالي: \`${artifact}\`.`);
+        }
+
+        if (mitigation) {
+            lines.push(`أما الحماية، فالكاتب كان مركز على: ${mitigation}`);
+        } else {
+            lines.push(`أهم نقطة دفاعية هنا إن ${context.profile.arLearning}`);
+        }
+
+        return uniqueValues(lines.filter(Boolean)).join('\n');
     }
 
     buildSummaryCallout(summary) {
@@ -1980,7 +2101,7 @@ class WriteupPostProcessor {
             owasp: profile.owasp,
             attackFlow: profile.attackFlow,
         };
-        const summary = this.buildEgyptianSummary(context);
+        const summary = this.buildEgyptianSummary(context, cleanedBody);
         return {
             cleanedBody,
             summary,
