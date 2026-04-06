@@ -16,6 +16,7 @@ const DEFAULT_SETTINGS = {
     alertHistory: {},
     pendingAlerts: [],
     cveTopicKeywords: ['cve-2026', 'cve-2025', 'zero-day'],
+    lastDailyAutoFetchAt: '',
     alertSettings: {
         enabled: true,
         inAppNotice: true,
@@ -25,6 +26,12 @@ const DEFAULT_SETTINGS = {
         newCves: true,
         cooldownMinutes: 180,
         maxItemsPerAlert: 3,
+    },
+    dailyAutoFetchSettings: {
+        enabled: true,
+        maxWriteups: 5,
+        intervalHours: 24,
+        notifyAfterFetch: true,
     },
     watchlistKeywords: ['rce','zero-day','critical','account takeover','authentication bypass','privilege escalation'],
     stats: { totalFetched:0, totalFailed:0, bySource:{}, byTag:{}, byMonth:{} },
@@ -290,6 +297,15 @@ function createDeviceId() {
 
 function normalizeAlertSettings(settings) {
     return Object.assign({}, DEFAULT_SETTINGS.alertSettings, settings || {});
+}
+
+function normalizeDailyAutoFetchSettings(settings) {
+    const merged = Object.assign({}, DEFAULT_SETTINGS.dailyAutoFetchSettings, settings || {});
+    merged.enabled = merged.enabled !== false;
+    merged.maxWriteups = Math.max(1, Math.min(20, parseInt(merged.maxWriteups, 10) || DEFAULT_SETTINGS.dailyAutoFetchSettings.maxWriteups));
+    merged.intervalHours = Math.max(1, Math.min(168, parseInt(merged.intervalHours, 10) || DEFAULT_SETTINGS.dailyAutoFetchSettings.intervalHours));
+    merged.notifyAfterFetch = merged.notifyAfterFetch !== false;
+    return merged;
 }
 
 function isBoilerplateTitle(title) {
@@ -562,6 +578,87 @@ function detectSeverity(title, tags) {
 function extractCVEs(text) {
     const m = (text || '').match(/CVE-\d{4}-\d{4,}/gi) || [];
     return [...new Set(m.map(c=>c.toUpperCase()))];
+}
+
+const AUTO_FETCH_SOURCE_SCORE = {
+    'project-zero': 18,
+    portswigger: 16,
+    assetnote: 14,
+    'pentester-land': 12,
+    'infosec-writeups': 10,
+    medium: 8,
+    'bugbounty-hunting': 8,
+    krebs: 4,
+    thehackernews: 3,
+};
+
+function scoreAutoFetchCandidate(item) {
+    const title = item?.title || '';
+    const tags = item?.tags || [];
+    const severity = item?.severity || detectSeverity(title, tags);
+    const cves = extractCVEs(`${title} ${item?.rssBody || ''}`);
+
+    let score = ({ critical: 120, high: 90, medium: 60, info: 28 })[severity] || 20;
+    if (item?.watchlisted) score += 26;
+    if (item?.topic) score += 12;
+    if (item?.sourceType) score += 8;
+    if (cves.length) score += 24;
+    if (/(writeup|bug bounty|report|research|walkthrough|poc|proof of concept|exploit)/i.test(title)) score += 14;
+    if ((tags || []).includes('bug-bounty')) score += 10;
+    if ((tags || []).includes('cve')) score += 10;
+    score += AUTO_FETCH_SOURCE_SCORE[item?.sourceId] || AUTO_FETCH_SOURCE_SCORE[slugify(item?.source || '')] || 0;
+
+    return score;
+}
+
+function pickTopAutoFetchItems(items, maxItems) {
+    const ranked = (items || [])
+        .map(item => ({ item, score: scoreAutoFetchCandidate(item) }))
+        .sort((a, b) => {
+            if (b.score !== a.score) return b.score - a.score;
+            const severityOrder = { critical: 0, high: 1, medium: 2, info: 3 };
+            const aSeverity = severityOrder[a.item?.severity] ?? 4;
+            const bSeverity = severityOrder[b.item?.severity] ?? 4;
+            if (aSeverity !== bSeverity) return aSeverity - bSeverity;
+            return String(b.item?.date || '').localeCompare(String(a.item?.date || ''));
+        });
+
+    const picked = [];
+    const pickedUrls = new Set();
+    const perSource = {};
+    const perTopic = {};
+
+    for (const { item } of ranked) {
+        if (picked.length >= maxItems) break;
+        const url = normalizeWriteupUrl(item?.normalizedUrl || item?.url);
+        if (!url || pickedUrls.has(url)) continue;
+
+        const sourceKey = item?.sourceId || slugify(item?.source || 'source');
+        const topicKey = slugify(item?.topic || '');
+        const sourceCount = perSource[sourceKey] || 0;
+        const topicCount = topicKey ? (perTopic[topicKey] || 0) : 0;
+        const remainingSlots = maxItems - picked.length;
+
+        if (remainingSlots > 1 && sourceCount >= 2) continue;
+        if (remainingSlots > 1 && topicKey && topicCount >= 2) continue;
+
+        picked.push(item);
+        pickedUrls.add(url);
+        perSource[sourceKey] = sourceCount + 1;
+        if (topicKey) perTopic[topicKey] = topicCount + 1;
+    }
+
+    if (picked.length < maxItems) {
+        for (const { item } of ranked) {
+            if (picked.length >= maxItems) break;
+            const url = normalizeWriteupUrl(item?.normalizedUrl || item?.url);
+            if (!url || pickedUrls.has(url)) continue;
+            picked.push(item);
+            pickedUrls.add(url);
+        }
+    }
+
+    return picked;
 }
 
 function detectPlatform(url, title) {
@@ -2579,7 +2676,7 @@ class SourcesModal extends obsidian.Modal {
         // Alerts
         contentEl.createEl('h3', {text: 'Alerts', cls: 'wm-section-title'});
         const alertHint = contentEl.createEl('p', {
-            text: 'Important alerts appear inside Obsidian on mobile and desktop. Desktop system notifications work where the platform grants permission. Cross-device alerts are best-effort if your plugin data syncs across devices.',
+            text: 'Important alerts appear inside Obsidian on mobile and desktop. System notifications work where the platform grants permission, but true push notifications while Obsidian Mobile is fully closed are not guaranteed by the plugin runtime.',
             cls: 'wm-hint',
         });
         alertHint.style.marginTop = '0';
@@ -2639,6 +2736,72 @@ class SourcesModal extends obsidian.Modal {
             this.render();
         });
 
+        // Daily auto fetch
+        contentEl.createEl('h3', {text: 'Daily Auto Fetch', cls: 'wm-section-title'});
+        const dailyHint = contentEl.createEl('p', {
+            text: 'Automatically save a curated batch of high-signal writeups every day. On mobile, this runs when Obsidian opens and during periodic checks while the app stays open. Fully closed apps cannot guarantee background fetch or outside-app notifications.',
+            cls: 'wm-hint',
+        });
+        dailyHint.style.marginTop = '0';
+
+        const dailySettings = normalizeDailyAutoFetchSettings(plugin.settings.dailyAutoFetchSettings);
+        const dailyRow = contentEl.createDiv({cls: 'wm-add wm-topic-add'});
+        const dailyOpts = dailyRow.createDiv({cls:'wm-topic-options'});
+
+        const makeDailyToggle = (label, key) => {
+            const wrap = dailyOpts.createEl('label', {cls:'wm-topic-toggle'});
+            const input = wrap.createEl('input', {type:'checkbox'});
+            input.checked = !!dailySettings[key];
+            input.addEventListener('change', async () => {
+                plugin.settings.dailyAutoFetchSettings = Object.assign({}, normalizeDailyAutoFetchSettings(plugin.settings.dailyAutoFetchSettings), { [key]: input.checked });
+                await plugin.saveSettings();
+            });
+            wrap.createSpan({text: label});
+        };
+
+        makeDailyToggle('Enable Daily Auto Fetch', 'enabled');
+        makeDailyToggle('Notify After Save', 'notifyAfterFetch');
+
+        const dailyCountWrap = dailyRow.createDiv({cls:'wm-bar-field'});
+        dailyCountWrap.createEl('label', {text: 'Writeups / run'});
+        const dailyCountIn = dailyCountWrap.createEl('input', {type:'number', placeholder:'5'});
+        dailyCountIn.style.width = '90px';
+        dailyCountIn.value = String(dailySettings.maxWriteups || 5);
+        dailyCountIn.addEventListener('change', async () => {
+            plugin.settings.dailyAutoFetchSettings = Object.assign({}, normalizeDailyAutoFetchSettings(plugin.settings.dailyAutoFetchSettings), {
+                maxWriteups: Math.max(1, Math.min(20, parseInt(dailyCountIn.value, 10) || 5)),
+            });
+            await plugin.saveSettings();
+        });
+
+        const dailyIntervalWrap = dailyRow.createDiv({cls:'wm-bar-field'});
+        dailyIntervalWrap.createEl('label', {text: 'Every (hours)'});
+        const dailyIntervalIn = dailyIntervalWrap.createEl('input', {type:'number', placeholder:'24'});
+        dailyIntervalIn.style.width = '90px';
+        dailyIntervalIn.value = String(dailySettings.intervalHours || 24);
+        dailyIntervalIn.addEventListener('change', async () => {
+            plugin.settings.dailyAutoFetchSettings = Object.assign({}, normalizeDailyAutoFetchSettings(plugin.settings.dailyAutoFetchSettings), {
+                intervalHours: Math.max(1, Math.min(168, parseInt(dailyIntervalIn.value, 10) || 24)),
+            });
+            await plugin.saveSettings();
+        });
+
+        const dailyBtnRow = contentEl.createDiv({cls:'wm-sel-row'});
+        const runDailyNowBtn = dailyBtnRow.createEl('button', {text:'⚡ Run Auto Fetch Now', cls:'wm-btn-sm'});
+        runDailyNowBtn.addEventListener('click', async () => {
+            runDailyNowBtn.disabled = true;
+            runDailyNowBtn.setText('Running...');
+            try {
+                const result = await plugin.runDailyAutoFetch('manual');
+                if (!result?.ran) new obsidian.Notice(`Auto fetch skipped: ${result?.reason || 'unknown'}`);
+                else if (result.savedCount > 0) new obsidian.Notice(`Saved ${result.savedCount} writeup${result.savedCount !== 1 ? 's' : ''} automatically`);
+                else new obsidian.Notice('No strong new writeups found right now');
+            } finally {
+                runDailyNowBtn.disabled = false;
+                runDailyNowBtn.setText('⚡ Run Auto Fetch Now');
+            }
+        });
+
         // Watchlist
         contentEl.createEl('h3', {text: 'Watchlist Keywords', cls: 'wm-section-title'});
         const watchRow = contentEl.createDiv({cls: 'wm-add'});
@@ -2684,6 +2847,7 @@ class SourcesModal extends obsidian.Modal {
                 topicFolderMap: plugin.settings.topicFolderMap || {},
                 cveTopicKeywords: plugin.settings.cveTopicKeywords || [],
                 alertSettings: plugin.settings.alertSettings || {},
+                dailyAutoFetchSettings: plugin.settings.dailyAutoFetchSettings || {},
                 watchlistKeywords: plugin.settings.watchlistKeywords || [],
             }, null, 2);
             try {
@@ -2778,6 +2942,9 @@ class SourcesModal extends obsidian.Modal {
                 }
                 if (parsed?.alertSettings && typeof parsed.alertSettings === 'object') {
                     plugin.settings.alertSettings = normalizeAlertSettings(Object.assign({}, plugin.settings.alertSettings || {}, parsed.alertSettings));
+                }
+                if (parsed?.dailyAutoFetchSettings && typeof parsed.dailyAutoFetchSettings === 'object') {
+                    plugin.settings.dailyAutoFetchSettings = normalizeDailyAutoFetchSettings(Object.assign({}, plugin.settings.dailyAutoFetchSettings || {}, parsed.dailyAutoFetchSettings));
                 }
                 if (Array.isArray(parsed?.watchlistKeywords)) {
                     plugin.settings.watchlistKeywords = uniqueValues([
@@ -2954,6 +3121,7 @@ class WriteupSettingTab extends obsidian.PluginSettingTab {
         new obsidian.Setting(containerEl).setName('Collect Writeups').setDesc('Scan, preview, and download new writeups').addButton(b=>b.setButtonText('Open Collector').setCta().onClick(()=>new FetchPreviewModal(this.app,this.plugin).open()));
         new obsidian.Setting(containerEl).setName('Topic Sources').setDesc(`${(this.plugin.settings.topicSources || []).length} topic source(s) configured for keyword-based discovery`).addButton(b=>b.setButtonText('Manage').onClick(()=>new SourcesModal(this.app,this.plugin).open()));
         new obsidian.Setting(containerEl).setName('Important Alerts').setDesc('Alert on critical findings and new CVEs across desktop and mobile devices where supported').addButton(b=>b.setButtonText('Configure').onClick(()=>new SourcesModal(this.app,this.plugin).open()));
+        new obsidian.Setting(containerEl).setName('Daily Auto Fetch').setDesc('Automatically save a curated set of high-signal writeups each day when Obsidian is open').addButton(b=>b.setButtonText('Configure').onClick(()=>new SourcesModal(this.app,this.plugin).open()));
         new obsidian.Setting(containerEl).setName('Statistics').setDesc('View fetch statistics and analytics').addButton(b=>b.setButtonText('View').onClick(()=>new StatsModal(this.app,this.plugin).open()));
         new obsidian.Setting(containerEl).setName('Watchlist Keywords').setDesc('Comma-separated keywords to highlight in scan results')
             .addText(t => {
@@ -2985,6 +3153,7 @@ class SecurityWriteupCollectorPlugin extends obsidian.Plugin {
         this.addCommand({id:'open-sources',  name:'Open Sources Manager', callback:()=>new SourcesModal(this.app,this).open()});
         this.addCommand({id:'fetch-preview', name:'Collect Writeups (with preview)', callback:()=>new FetchPreviewModal(this.app,this).open()});
         this.addCommand({id:'scan-topic-sources', name:'Scan Topic Sources', callback:()=>{ const modal = new FetchPreviewModal(this.app,this); modal.open(); setTimeout(() => modal.startScan(true), 50); }});
+        this.addCommand({id:'run-daily-auto-fetch-now', name:'Run Daily Auto Fetch Now', callback:()=>this.runDailyAutoFetch('manual').catch(e => console.error('SecFeeds: manual daily auto fetch failed:', e))});
         this.addCommand({id:'open-stats',    name:'View Statistics', callback:()=>new StatsModal(this.app,this).open()});
 
         this.addSettingTab(new WriteupSettingTab(this.app, this));
@@ -2994,6 +3163,7 @@ class SecurityWriteupCollectorPlugin extends obsidian.Plugin {
         this.statusBarItem.onClickEvent(() => new SourcesModal(this.app,this).open());
         this.app.workspace.onLayoutReady(() => {
             this.processPendingAlerts().catch(e => console.error('SecFeeds: pending alert processing failed:', e));
+            this.startDailyAutoFetchScheduler();
         });
 
         if (this.settings.autoFetchOnStartup) {
@@ -3048,6 +3218,8 @@ class SecurityWriteupCollectorPlugin extends obsidian.Plugin {
 
     onunload() {
         if (this._autoFetchTimer) clearTimeout(this._autoFetchTimer);
+        if (this._dailyAutoFetchStartupTimer) clearTimeout(this._dailyAutoFetchStartupTimer);
+        if (this._dailyAutoFetchInterval) clearInterval(this._dailyAutoFetchInterval);
     }
 
     refreshStatusBar() {
@@ -3199,6 +3371,234 @@ class SecurityWriteupCollectorPlugin extends obsidian.Plugin {
         }
     }
 
+    startDailyAutoFetchScheduler() {
+        if (this._dailyAutoFetchStartupTimer) clearTimeout(this._dailyAutoFetchStartupTimer);
+        if (this._dailyAutoFetchInterval) clearInterval(this._dailyAutoFetchInterval);
+
+        this._dailyAutoFetchStartupTimer = setTimeout(() => {
+            this.runDailyAutoFetch('startup').catch(e => console.error('SecFeeds: startup daily auto fetch failed:', e));
+        }, 8000);
+
+        this._dailyAutoFetchInterval = setInterval(() => {
+            this.runDailyAutoFetch('background-check').catch(e => console.error('SecFeeds: scheduled daily auto fetch failed:', e));
+        }, 60 * 60 * 1000);
+    }
+
+    isDailyAutoFetchDue(trigger='scheduled') {
+        const settings = normalizeDailyAutoFetchSettings(this.settings.dailyAutoFetchSettings);
+        if (!settings.enabled && trigger !== 'manual') return false;
+        if (trigger === 'manual') return true;
+
+        const lastTs = new Date(this.settings.lastDailyAutoFetchAt || 0).getTime();
+        if (!Number.isFinite(lastTs)) return true;
+        const intervalMs = Math.max(1, Number(settings.intervalHours || 24)) * 60 * 60 * 1000;
+        return (Date.now() - lastTs) >= intervalMs;
+    }
+
+    buildFeedCandidate(src, item, watchlistKeywords=[]) {
+        const title = String(item?.title || '').trim();
+        const normalizedLink = normalizeWriteupUrl(item?.link || item?.url);
+        if (!title || !normalizedLink) return null;
+        if (isDiscoveryBlockedUrl(normalizedLink)) return null;
+        if (!isLikelySecurityWriteupTitle(title)) return null;
+
+        const tags = uniqueValues([...extractTags(title, item?.cats || []), slugify(src?.name || 'source')]);
+        const titleLower = title.toLowerCase();
+        const watchlisted = (watchlistKeywords || []).some(keyword => titleLower.includes(keyword));
+
+        return {
+            title,
+            url: normalizedLink,
+            normalizedUrl: normalizedLink,
+            source: src?.name || 'Unknown',
+            sourceId: src?.id || slugify(src?.name || 'source'),
+            articleSelector: src?.articleSelector || 'article',
+            date: parseDateString(item?.pubDate || new Date().toISOString()),
+            tags,
+            author: item?.author || '',
+            rssBody: htmlToMd(item?.desc || ''),
+            checked: true,
+            status: 'pending',
+            watchlisted,
+            severity: detectSeverity(title, tags),
+        };
+    }
+
+    async collectAutoFetchCandidates(options = {}) {
+        const folder = this.settings.outputFolder || 'writeups';
+        const seen = options.seenSet || this.buildSeenUrlSet(folder);
+        const scanSeen = new Set(seen);
+        const watchlist = (this.settings.watchlistKeywords || []).map(keyword => String(keyword || '').toLowerCase()).filter(Boolean);
+        const candidates = [];
+        const rssLimitPerSource = Math.max(3, parseInt(options.rssLimitPerSource, 10) || 8);
+
+        for (const src of this.settings.sources.filter(source => source.enabled)) {
+            let accepted = 0;
+            try {
+                const items = await fetchFeedItems(src);
+                for (const feedItem of items) {
+                    if (accepted >= rssLimitPerSource) break;
+                    const candidate = this.buildFeedCandidate(src, feedItem, watchlist);
+                    if (!candidate) continue;
+                    if (scanSeen.has(candidate.normalizedUrl) || candidates.some(item => item.normalizedUrl === candidate.normalizedUrl)) continue;
+                    candidates.push(candidate);
+                    scanSeen.add(candidate.normalizedUrl);
+                    accepted++;
+                }
+            } catch(e) {
+                console.error('SecFeeds: auto-fetch RSS candidate collection failed:', src?.name, e?.message || e);
+            }
+        }
+
+        for (const topicSource of (this.settings.topicSources || []).filter(source => source.enabled)) {
+            try {
+                const topicItems = await fetchTopicResults(
+                    topicSource,
+                    scanSeen,
+                    this.settings.topicFolderMap || {},
+                    folder,
+                    { syncHistory: this.settings.topicSyncHistory || {}, respectSchedule: options.respectSchedule !== false }
+                );
+
+                for (const item of topicItems) {
+                    const titleLower = String(item.title || '').toLowerCase();
+                    item.watchlisted = watchlist.some(keyword => titleLower.includes(keyword));
+                    candidates.push(item);
+                }
+            } catch(e) {
+                console.error('SecFeeds: auto-fetch topic candidate collection failed:', topicSource?.name, e?.message || e);
+            }
+        }
+
+        return { candidates, seen };
+    }
+
+    async saveAutoFetchedWriteups(items, seenSet) {
+        const folder = this.settings.outputFolder || 'writeups';
+        await this.ensureFolder(folder);
+
+        if (!this.settings.stats) this.settings.stats = {totalFetched:0,totalFailed:0,bySource:{},byTag:{},byMonth:{}};
+
+        const savedItems = [];
+        const failedItems = [];
+
+        for (const item of items || []) {
+            let body = item.rssBody || '';
+            let originalUrl = item.url;
+            let fetchedFrom = item.url;
+            let fallbackUsed = false;
+            let fetchStatus = 'original';
+
+            if (this.settings.fetchFullContent) {
+                const result = await fetchArticleContent(item.url, item.articleSelector);
+                originalUrl = result.originalUrl || item.url;
+                fetchStatus = result.fetchStatus || 'failed';
+                if (result.content && result.content.length > body.length) {
+                    body = result.content;
+                    fetchedFrom = result.fetchedFrom;
+                    fallbackUsed = result.fallbackUsed;
+                }
+            }
+
+            try {
+                const saved = await this.saveWriteup(folder, {...item, body, originalUrl, fetchedFrom, fallbackUsed, fetchStatus}, seenSet);
+                if (!saved) continue;
+
+                savedItems.push({...item, originalUrl, fetchedFrom, fallbackUsed, fetchStatus});
+                const stats = this.settings.stats;
+                stats.totalFetched++;
+                stats.bySource[item.source] = (stats.bySource[item.source] || 0) + 1;
+                for (const tag of item.tags || []) stats.byTag[tag] = (stats.byTag[tag] || 0) + 1;
+                const month = String(item.date || '').slice(0, 7);
+                if (month) stats.byMonth[month] = (stats.byMonth[month] || 0) + 1;
+            } catch(e) {
+                console.error('SecFeeds: auto-save failed:', item?.title, e?.message || e);
+                failedItems.push(item);
+                this.settings.stats.totalFailed++;
+            }
+
+            await sleep(250);
+        }
+
+        if (savedItems.length > 0) {
+            await this.updateIndex(folder);
+            this.settings.lastFetched = new Date().toLocaleString();
+        }
+
+        this.settings.seenUrls = [...seenSet].slice(-3000);
+        if (failedItems.length > 0) {
+            const failedSet = new Set(this.settings.failedUrls || []);
+            for (const item of failedItems) failedSet.add(item.url);
+            this.settings.failedUrls = [...failedSet].slice(-500);
+        }
+
+        await this.saveSettings();
+        this.refreshStatusBar();
+        return { savedItems, failedItems };
+    }
+
+    sendAutoFetchSummary(savedItems, trigger='daily auto fetch', failedCount=0) {
+        const dailySettings = normalizeDailyAutoFetchSettings(this.settings.dailyAutoFetchSettings);
+        if (!dailySettings.notifyAfterFetch) return;
+
+        const titles = (savedItems || []).slice(0, 3).map(item => item.title).join(' | ');
+        const count = savedItems?.length || 0;
+        const message = count > 0
+            ? `Saved ${count} writeup${count !== 1 ? 's' : ''} during ${trigger}: ${titles}`.slice(0, 500)
+            : `No strong new writeups were found during ${trigger}`.slice(0, 500);
+
+        new obsidian.Notice(`📥 ${message}`, 12000);
+
+        const alertSettings = normalizeAlertSettings(this.settings.alertSettings);
+        if (alertSettings.systemNotification !== false && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+            try {
+                new Notification('Security Writeup Collector', { body: message.slice(0, 180) });
+            } catch(e) {
+                console.warn('SecFeeds: auto-fetch notification failed:', e?.message || e);
+            }
+        }
+
+        if (failedCount > 0) {
+            new obsidian.Notice(`⚠️ ${failedCount} writeup${failedCount !== 1 ? 's' : ''} failed during ${trigger}`, 8000);
+        }
+    }
+
+    async runDailyAutoFetch(trigger='scheduled') {
+        if (this._dailyAutoFetchRunning) return { ran: false, reason: 'busy' };
+        if (!this.isDailyAutoFetchDue(trigger)) return { ran: false, reason: 'not-due' };
+
+        this._dailyAutoFetchRunning = true;
+        try {
+            const settings = normalizeDailyAutoFetchSettings(this.settings.dailyAutoFetchSettings);
+            if (!settings.enabled && trigger !== 'manual') return { ran: false, reason: 'disabled' };
+
+            this.settings.lastDailyAutoFetchAt = new Date().toISOString();
+            await this.saveSettings();
+
+            const { candidates, seen } = await this.collectAutoFetchCandidates({
+                respectSchedule: true,
+                rssLimitPerSource: Math.max(settings.maxWriteups * 3, 8),
+            });
+
+            const picked = pickTopAutoFetchItems(candidates, settings.maxWriteups);
+            if (!picked.length) {
+                if (trigger === 'manual') this.sendAutoFetchSummary([], 'manual auto fetch', 0);
+                return { ran: true, reason: 'empty', savedCount: 0, failedCount: 0 };
+            }
+
+            const result = await this.saveAutoFetchedWriteups(picked, seen);
+            this.sendAutoFetchSummary(result.savedItems, trigger, result.failedItems.length);
+            return {
+                ran: true,
+                reason: 'completed',
+                savedCount: result.savedItems.length,
+                failedCount: result.failedItems.length,
+            };
+        } finally {
+            this._dailyAutoFetchRunning = false;
+        }
+    }
+
     buildSeenUrlSet(baseFolder) {
         const seen = new Set();
         addSeenUrls(seen, ...((this.settings.seenUrls || []).slice(-3000)));
@@ -3292,6 +3692,8 @@ class SecurityWriteupCollectorPlugin extends obsidian.Plugin {
         if (!this.settings.alertHistory || typeof this.settings.alertHistory !== 'object') this.settings.alertHistory = {};
         if (!Array.isArray(this.settings.pendingAlerts)) this.settings.pendingAlerts = [];
         this.settings.alertSettings = normalizeAlertSettings(this.settings.alertSettings);
+        this.settings.dailyAutoFetchSettings = normalizeDailyAutoFetchSettings(this.settings.dailyAutoFetchSettings);
+        if (!this.settings.lastDailyAutoFetchAt) this.settings.lastDailyAutoFetchAt = '';
         this.settings.cveTopicKeywords = normalizeCveKeywordList(this.settings.cveTopicKeywords || DEFAULT_SETTINGS.cveTopicKeywords);
         if (!this.settings.watchlistKeywords) this.settings.watchlistKeywords = [...DEFAULT_SETTINGS.watchlistKeywords];
         if (!this.settings.stats) this.settings.stats = {totalFetched:0,totalFailed:0,bySource:{},byTag:{},byMonth:{}};

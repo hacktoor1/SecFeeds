@@ -1,6 +1,6 @@
 # 🔐 Security Writeup Collector
 
-An Obsidian plugin that collects cybersecurity writeups offline into your vault as clean, richly-formatted Markdown notes. It combines RSS feeds, topic-based discovery, Medium fallback handling, duplicate prevention, Egyptian-Arabic summaries, reusable test cases, and local alerts for important findings.
+An Obsidian plugin that collects cybersecurity writeups offline into your vault as clean, richly-formatted Markdown notes. It combines RSS feeds, topic-based discovery, Medium fallback handling, duplicate prevention, Egyptian-Arabic summaries, reusable test cases, local alerts, and daily auto-fetch for high-signal writeups.
 
 ## ✨ Features
 
@@ -51,10 +51,11 @@ An Obsidian plugin that collects cybersecurity writeups offline into your vault 
 
 ### 🚨 Important Alerts
 - **Critical and CVE alerts** — generate local alerts when a scan finds critical writeups or newly matched CVE content
-- **Works on desktop and mobile** — in-app Obsidian notices show on both; desktop system notifications are used when permission is available
+- **Works on desktop and mobile** — in-app Obsidian notices show on both; system notifications are used when the platform grants permission
 - **Best-effort cross-device sync** — alerts can be relayed across devices when plugin data is synced
 - **Cooldown controls** — avoid alert spam by throttling repeated notifications for the same writeup
 - **Test alert button** — verify the notification path from settings
+- **Important limitation** — true push notifications while Obsidian Mobile is fully closed are not guaranteed by the plugin runtime
 
 ### 🏷️ Automatic Tagging & Severity Detection
 - **Smart tag extraction** from titles and RSS categories — recognizes a broad set of web, mobile, network, AD, bug bounty, and CVE topics
@@ -69,6 +70,13 @@ An Obsidian plugin that collects cybersecurity writeups offline into your vault 
 - **Egyptian Arabic summary** — inserts a concise revision-friendly summary directly after the frontmatter
 - **Test case generator** — appends a reusable block with objective, steps, payload, vulnerable behavior, secure behavior, and inferred metadata
 - **AI-style enrichment heuristics** — fills severity, CWE, OWASP category, attack flow, and extracted CVEs when possible
+
+### 🤖 Daily Auto Fetch
+- **Automatic daily collection** — saves a curated batch of high-signal writeups on a schedule
+- **Top writeup selection** — ranks candidates using severity, watchlist matches, CVEs, source quality, and writeup-style title signals
+- **Default daily batch** — configured to save up to **5** writeups every **24 hours**
+- **Run now command** — trigger the curated auto-fetch manually from settings or command palette
+- **Mobile-friendly behavior** — runs on startup and periodic checks while Obsidian stays open on mobile
 
 ### 📝 Rich Markdown Output
 Each saved writeup includes:
@@ -108,15 +116,16 @@ Each saved writeup includes:
 - **Output folder**, **limit per source**, **auto-fetch on startup**
 - **Cache management** — Clear seen URLs to re-fetch older writeups
 - **Alert controls** — enable/disable alerts for critical findings and CVEs, request desktop notification permission, and test alerts
+- **Daily auto fetch controls** — configure whether automatic curated saves are enabled, how many writeups to save, the fetch interval, and whether to notify after auto-save
 - **CVE keyword management** — maintain a dedicated list of rolling CVE queries used by the built-in CVE topic source
 - Settings accessible from Sources Manager, Settings Tab, or ribbon icons
 
 ### 🎨 UI/UX
-- **Gradient modal headers** — Purple gradient accent for a premium feel
-- **Card-style source rows** — Shadow and hover lift effects
-- **Animated progress bar** — Pulsing glow during fetch
-- **Fade-in animations** — Smooth content transitions
-- **Custom thin scrollbars** — Clean scrolling in lists
+- **Monochrome risk palette** — black / white / gray base with red and yellow accents mapped to severity
+- **Refined modal hierarchy** — clearer headers, subtitles, cards, badges, and footer actions
+- **Mobile-optimized screens** — full-screen modals, safer touch targets, sticky action bars, and safe-area support
+- **Animated progress and transitions** — subtle motion without clutter
+- **Custom thin scrollbars** — clean scrolling in lists
 - **Two ribbon icons** + **Multiple command palette commands** + **Status bar widget**
 
 ## 🚀 Installation
@@ -142,7 +151,8 @@ Each saved writeup includes:
 2. Click the **⬇ ribbon icon** to open the **Collector modal** — scan, search, sort, preview, and save.
 3. Use the **📊 Stats** button to view your analytics dashboard.
 4. Use **Topic Search Sources** and **New CVEs** from the Sources Manager to expand discovery beyond RSS feeds.
-5. Find your writeups in the configured output folder, organized by source or topic category.
+5. Use **Daily Auto Fetch** if you want the plugin to save a curated batch of strong writeups automatically.
+6. Find your writeups in the configured output folder, organized by source or topic category.
 
 ## 🧠 How It Works
 
@@ -158,10 +168,18 @@ Each saved writeup includes:
 3. Existing vault notes are checked through frontmatter fields such as `url`, `original_url`, and `fetched_from`.
 4. A second duplicate check runs again during save to prevent accidental re-imports.
 
+### Daily Auto Fetch Flow
+1. The plugin gathers candidates from enabled RSS sources and topic sources.
+2. It filters out weak, duplicate, and blocked results.
+3. It ranks the remaining items by severity, watchlist keywords, CVEs, source quality, and writeup-like signals.
+4. It saves the top configured batch size, which defaults to `5` writeups every `24` hours.
+5. On mobile, this works while Obsidian is open or reopening, not as a guaranteed background push system when the app is fully closed.
+
 ### Built-In Commands
 - `Open Sources Manager`
 - `Collect Writeups (with preview)`
 - `Scan Topic Sources`
+- `Run Daily Auto Fetch Now`
 - `View Statistics`
 
 ## 📝 Saved Note Example
